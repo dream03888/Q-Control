@@ -1,0 +1,285 @@
+/* ----------------------------------------------------
+   GLOBAL FONT
+---------------------------------------------------- */
+* {
+  font-family: 'Prompt', sans-serif;
+}
+
+/* ----------------------------------------------------
+   SCREEN WRAPPER + CARD
+---------------------------------------------------- */
+.screen-wrapper {
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #fff4e6, #ffe4c4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.screen-card {
+  width: 90%;
+  height: 90%;
+  background: white;
+  border-radius: 25px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 40px rgba(255, 140, 0, 0.3);
+}
+
+/* ----------------------------------------------------
+   HEADER
+---------------------------------------------------- */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo img {
+  width: 90px;
+  margin-right: 15px;
+}
+
+.brand-text {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #ff8c00;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ----------------------------------------------------
+   TAB BUTTONS
+---------------------------------------------------- */
+.tab-buttons .tab-btn {
+  background: #f5f5f5;
+  border: 2px solid transparent;
+  border-radius: 25px;
+  padding: 12px 28px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #444;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  background: linear-gradient(90deg, #ffb347, #ffcc33);
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(255, 140, 0, 0.5);
+}
+
+.tab-btn.active {
+  background: linear-gradient(90deg, #007bff, #ff8c00);
+  color: white;
+  border-color: #ff8c00;
+  box-shadow: 0 0 15px rgba(255, 140, 0, 0.6);
+}
+
+/* ----------------------------------------------------
+   TABLE HEADER + ACTIVE ROW
+---------------------------------------------------- */
+.table-header {
+  background: linear-gradient(90deg, #007bff, #00aaff);
+}
+
+.table-header-hold {
+  background: linear-gradient(90deg, #ffcc33, #ffaa00);
+}
+
+.active-row {
+  background-color: #fffbe7 !important;
+}
+
+/* ----------------------------------------------------
+   BUTTONS
+---------------------------------------------------- */
+.btn {
+  min-width: 140px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+}
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+/* ----------------------------------------------------
+   ANIMATIONS
+---------------------------------------------------- */
+.fade-in {
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ----------------------------------------------------
+   NAVBAR (DESKTOP)
+---------------------------------------------------- */
+.navbar {
+  background: linear-gradient(90deg, #111, #222);
+  color: white;
+}
+
+.nav-buttons .btn {
+  font-weight: 600;
+  border-radius: 30px;
+  padding: 8px 20px;
+  transition: 0.3s;
+}
+
+/* ----------------------------------------------------
+   TABLE (DEFAULT)
+---------------------------------------------------- */
+.table th {
+  font-weight: 600;
+}
+
+.table-header {
+  background-color: #2c3e50;
+}
+
+.table-header-hold {
+  background-color: #795548;
+}
+
+/* ----------------------------------------------------
+   MODAL
+---------------------------------------------------- */
+.modal-content {
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.modal-header {
+  background: linear-gradient(90deg, #ffb300, #ff8c00);
+}
+
+.modal-body p {
+  margin: 0.3rem 0;
+  font-size: 16px;
+}
+
+.badge {
+  font-size: 1.1rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.75rem;
+}
+
+/* ----------------------------------------------------
+   BURGER MENU (MOBILE)
+---------------------------------------------------- */
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  background: #111;
+  animation: fadeInMenu 0.3s ease-in-out;
+  border-top: 1px solid #333;
+}
+
+.mobile-menu.open {
+  display: flex;
+}
+
+.mobile-item {
+  background: none;
+  border: none;
+  padding: 16px 20px;
+  width: 100%;
+  text-align: left;
+  font-size: 1.25rem;
+  color: #fff;
+  border-bottom: 1px solid #222;
+  transition: 0.25s;
+}
+
+.mobile-item:hover {
+  background: #222;
+  color: #ffb347;
+}
+
+/* Animation */
+@keyframes fadeInMenu {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ----------------------------------------------------
+   RESPONSIVE TABLE (MOBILE)
+---------------------------------------------------- */
+.mobile-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* ----------------------------------------------------
+   MOBILE OPTIMIZATION
+---------------------------------------------------- */
+@media (max-width: 576px) {
+
+  .screen-card {
+    padding: 1rem !important;
+  }
+
+  .brand-text {
+    font-size: 1.6rem !important;
+  }
+
+  .table th {
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .table td {
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+
+  .btn-call {
+    padding: 5px 12px;
+    font-size: 0.85rem;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+
+
+  /* Hover effect */
+.row-hover {
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.row-hover:hover {
+  background: #f4f6f9 !important;
+}
+
+/* Table style (Omise-like) */
+.omise-table th {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.omise-table td {
+  font-size: 1rem;
+  vertical-align: middle;
+}
+
+/* JSON box */
+.json-box {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 10px;
+  max-height: 300px;
+  overflow: auto;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+}
+
+}

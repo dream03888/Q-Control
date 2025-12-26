@@ -1,0 +1,55 @@
+<nav>
+    <div class="container">
+        <div class="nav-wrap">
+            <div class="hamberger" (click)="toggleMenu()">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <div class="logo">
+                <a><img src="assets/logo/logo-removebg-preview.png" alt="logo"></a>SAFARI HR
+            </div>
+            <!-- <div class="work" >
+                <a (click)="workTime()"><img src="assets/icon/clock.svg" alt="work"></a>
+            </div> -->
+            <div class="home-wrap">
+                 <span class="my-auto rounded-circle me-2 bg-dark">
+          <!-- <img *ngIf="!loggedInUser.picture" class="rounded-circle" src="./assets/images/icon.png" alt="user_profile_pic" width="30px" height="30px"> -->
+          <!-- /<img *ngIf="loggedInUser.picture" class="rounded-circle" [src]="getImageSrc(loggedInUser.picture)" alt="user_profile_pic" width="50px" height="50px"> -->
+        </span>
+                <!-- <span class="h6 my-auto me-2">{{loggedInUser.p_name}} {{loggedInUser.f_name}} {{loggedInUser.l_name}} [{{loggedInUser.role_name}}]</span> -->
+
+                <!-- <a class="home" routerLink="/home"><img src="assets/icon/home.svg" alt="home"></a> -->
+            </div>
+        </div>
+        <div class="overlay" [class.active]="menuActive"></div>
+        <div class="menu" [class.active]="menuActive">
+            <div class="logo-menu">
+                <p><img src="assets/logo/logo-removebg-preview.png" alt="">SAFARI HR</p>
+            </div>
+            <div class="menu-item">
+                <!-- <a routerLink="/home"><img src="assets/icon/home.svg" alt="home">Home</a> -->
+                <a routerLink="/employee"><img src="assets/icon/user.svg" alt="profile">Employee</a>
+                <a routerLink="/export-data"><img src="assets/icon/logout.svg" alt="profile">Export</a>
+                <a routerLink="/import-data"><img src="assets/icon/logout.svg" alt="profile">Import</a>
+                <!-- <a routerLink="/register-employee"><img src="assets/icon/user-plus.svg" alt="register">Register
+                    Employee</a> -->
+            </div>
+            <div class="logout-icon">
+                <button class="btn btn-danger" (click)="logout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <div *ngIf="isPassAlertVisible || isAnimating" class="backdrop" (click)="closePassAlert()">
+            <!-- <app-pass-alert
+                [ngClass]="{'animate-alert-in': isPassAlertVisible, 'animate-alert-out': isAnimating}"></app-pass-alert> -->
+        </div>
+
+        <div *ngIf="isCarAlertVisible || isAnimating" class="backdrop" (click)="closeCarAlert()">
+            <!-- <app-car-alert
+                [ngClass]="{'animate-alert-in': isCarAlertVisible, 'animate-alert-out': isAnimating}"></app-car-alert> -->
+        </div>
+    </div>
+</nav>

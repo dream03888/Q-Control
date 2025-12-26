@@ -1,0 +1,44 @@
+<div class="display-root">
+
+  <div class="left-panel">
+
+      <!-- 🔶 TOP SECTION -->
+      <div class="top-section">
+        <div class="brand-header">SAFARI WORLD TIGER BURGER</div>
+        <div class="ready-label">READY TO SERVE</div>
+      </div>
+
+      <!-- 🔶 CURRENT QUEUE -->
+      <div class="middle-section">
+        <div class="current-queue-box">
+            <div class="current-queue" >{{ _queueString }}</div>
+        </div>
+
+        <!-- 🔶 NEXT QUEUE -->
+        <div class="next-label">NEXT QUEUES</div>
+        <div class="ticker-wrapper">
+            <div class="ticker-content">
+                <div class="ticker-item" *ngFor="let q of _data">{{ q.queue }}</div>
+            </div>
+        </div>
+
+        <!-- 🔶 WAITING QUEUE -->
+        <div class="waiting-container">
+          <div class="next-label">WAITING QUEUE</div>
+          <div class="ticker-wrapper-waiting">
+            <div class="current-queue-waiting">{{ _waitingCountQueue }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🔶 LOGO -->
+      <div class="bottom-section">
+        <div class="tiger-logo">
+            <img src="Assets/TGBG_LOGO BIGBIG.png" />
+            <div class="fw-bold mt-2">TIGER BURGER</div>
+        </div>
+      </div>
+
+  </div>
+
+</div>

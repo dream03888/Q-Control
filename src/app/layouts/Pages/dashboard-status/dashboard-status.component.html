@@ -1,0 +1,67 @@
+<div class="container-fluid py-4 dashboard">
+  <!-- 🏷 HEADER -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+    <div>
+      <h2 class="fw-bold text-dark mb-0">🍔 TIGER BURGER DASHBOARD</h2>
+      <p class="text-muted mb-0">สรุปยอดขายประจำวันที่ {{ today | date: 'dd/MM/yyyy' }}</p>
+    </div>
+
+    <!-- 🔍 ตัวกรองวันที่ -->
+    <div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
+      <input type="date" class="form-control" [(ngModel)]="startDate" />
+      <span class="fw-bold">-</span>
+      <input type="date" class="form-control" [(ngModel)]="endDate" />
+      <button class="btn btn-primary" (click)="filterByDate()">
+        <i class="fa-solid fa-filter me-2"></i> กรอง
+      </button>
+    </div>
+  </div>
+
+  <!-- 💰 ยอดขายรวมทั้งวัน -->
+  <div class="row mb-4">
+    <div class="col-lg-4 col-md-6">
+      <div class="card border-0 shadow-lg rounded-4 p-4 text-center summary-card">
+        <div class="card-body">
+          <div class="fs-1 fw-bold text-success mb-1">
+            {{ totalSales | number:'1.2-2' }} ฿
+          </div>
+          <div class="text-muted fs-5">ยอดขายรวมช่วงที่เลือก</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📊 แผนภูมิ + ตาราง -->
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-lg rounded-4 p-4 h-100">
+        <h5 class="fw-bold mb-3 text-secondary">
+          <i class="fa-solid fa-chart-pie me-2 text-warning"></i>
+          ยอดขายตามเมนู
+        </h5>
+        <canvas id="menuChart"></canvas>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-lg rounded-4 p-4 h-100">
+        <h5 class="fw-bold mb-3 text-secondary">
+          <i class="fa-solid fa-fire me-2 text-danger"></i> เมนูขายดี
+        </h5>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between align-items-center py-3"
+              *ngFor="let item of _bestSeller">
+            <div>
+              <i class="fa-solid fa-burger me-2 text-warning"></i>
+              {{ item.product_name }}
+            </div>
+            <div class="text-end">
+              <div class="fw-bold text-success">{{ item.amount | number }} ฿</div>
+              <div class="text-muted small">ขาย {{ item.total_qty }} ชิ้น</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

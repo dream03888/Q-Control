@@ -1,0 +1,293 @@
+<!-- 🔸 Navbar -->
+<nav class="navbar bg-dark text-white px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
+
+  <!-- LOGO -->
+  <div class="d-flex align-items-center gap-3">
+    <img src="Assets/TGBG_LOGO BIGBIG.png" alt="Logo" width="50" />
+    <h4 class="m-0 fw-bold">TIGER BURGER DASHBOARD</h4>
+  </div>
+
+  <!-- DESKTOP MENU -->
+  <div class="nav-buttons d-none d-md-flex gap-3">
+    <button class="btn"
+      [ngClass]="{ 'btn-warning text-dark': page === 'queue', 'btn-outline-light': page !== 'queue' }"
+      (click)="page = 'queue'">
+      🍔 เรียก Queue
+    </button>
+
+    <button class="btn"
+      [ngClass]="{ 'btn-warning text-dark': page === 'status', 'btn-outline-light': page !== 'status' }"
+      (click)="page = 'status'">
+      💳 เช็คสถานะหลังบ้าน
+    </button>
+
+    <button class="btn btn-success" (click)="ClickDashboard()">♥Dashboard</button>
+    <button class="btn btn-success" (click)="sendToPrinter()">💾 Export</button>
+      <button class="btn btn-success" (click)="ClickDashboardQueue(); toggleMenu()">📊 Dashboard Queue</button>
+
+  </div>
+
+  <!-- MOBILE BURGER BUTTON -->
+  <button class="btn btn-outline-light d-md-none" (click)="toggleMenu()">
+    <i class="fa-solid fa-bars fs-3"></i>
+  </button>
+</nav>
+
+<!-- MOBILE DROPDOWN MENU -->
+<div class="mobile-menu d-md-none" [class.open]="menuOpen">
+  <button class="mobile-item" (click)="page='queue'; toggleMenu()">🍔 เรียก Queue</button>
+  <button class="mobile-item" (click)="page='status'; toggleMenu()">💳 เช็คสถานะหลังบ้าน</button>
+  <button class="mobile-item" (click)="ClickDashboard(); toggleMenu()">♥ Dashboard</button>
+  <button class="mobile-item" (click)="sendToPrinter(); toggleMenu()">💾 Export</button>
+  <button class="mobile-item" (click)="ClickDashboardQueue(); toggleMenu()">📊 Dashboard Queue</button>
+
+</div>
+
+<!-- 🧾 หน้าเรียก Queue -->
+<div *ngIf="page === 'queue'">
+  <div class="screen-wrapper">
+    <div class="screen-card shadow-lg">
+
+      <!-- HEADER -->
+      <div class="header d-flex justify-content-between align-items-center">
+        <div class="logo text-start">
+          <span class="brand-text"> TIGER BURGER QUEUE</span>
+        </div>
+
+        <!-- ปุ่มสลับหน้า -->
+        <div class="tab-buttons d-flex gap-3">
+          <!-- <button class="tab-btn" [class.active]="activeTab === 'main'" (click)="switchTab('main')">
+            <i class="fa-solid fa-list me-2"></i> คิวที่รอเรียก
+          </button> -->
+
+          <!-- <button class="tab-btn position-relative" [class.active]="activeTab === 'hold'" (click)="switchTab('hold')">
+            <i class="fa-solid fa-pause me-2"></i> คิวที่พักไว้
+            <span *ngIf="_hold.length > 0" class="badge-count">
+              {{ _hold.length }}
+            </span>
+          </button> -->
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="content mt-4">
+
+        <!-- 🟦 MAIN QUEUE -->
+        <div *ngIf="activeTab === 'main'" class="fade-in">
+
+          <div class="table-responsive mobile-table">
+            <table class="table table-hover align-middle text-center mb-0">
+              <thead class="table-header text-white">
+                <tr>
+                  <th>คิว</th>
+                  <th>เวลา</th>
+                  <!-- <th>สถานะ</th> -->
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr *ngFor="let q of _data" [class.active-row]="playing === q.queue">
+
+                  <td class="fw-bold fs-4 text-primary">{{ q.queue }}</td>
+
+                  <td class="text-muted small"> {{ q.time }} </td>
+
+                  <!-- <td>
+                    <span class="badge px-2 py-1"
+                      [ngClass]="{
+                        'bg-secondary': q.status === '1',
+                        'bg-success': q.status === '3'
+                      }"
+                    >
+                      {{ q.status === '1' ? 'รอเรียก' : 'เรียกแล้ว' }}
+                    </span>
+                  </td> -->
+
+                  <td>
+                    <button class="btn btn-warning btn-call"
+                            (click)="CallQueueAPI(q.queue , q.transaction_id)">
+                      📣 เรียก
+                    </button>
+                       <button class="btn btn-primary btn-call"
+                            (click)="updateTransaction(q.transaction_id)">
+                      📣 ยืนยัน
+                    </button>
+                  </td>
+
+               
+                </tr>
+
+                <tr *ngIf="_data.length === 0">
+                  <td colspan="4" class="text-muted py-4">ไม่มีคิวที่รอเรียก</td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- 🟨 HOLD QUEUE -->
+        <div *ngIf="activeTab === 'hold'" class="fade-in">
+
+          <div class="table-responsive mobile-table">
+            <table class="table table-hover align-middle text-center mb-0">
+              <thead class="table-header-hold">
+                <tr>
+                  <th>คิว</th>
+                  <th>เวลา</th>
+                  <th>สถานะ</th>
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr *ngFor="let q of _waiting">
+                  <td class="fw-bold fs-4 text-warning">{{ q.queue }}</td>
+                  <td class="text-muted small">{{ q.time }}</td>
+                  <td>
+                    <span class="badge bg-warning text-dark px-2 py-1">พัก</span>
+                  </td>
+                  <td>
+                    <button class="btn btn-success btn-call"
+                      (click)="updateTransactionWaiting('1',q.transaction_id)">
+                      ▶️ คืนคิว
+                    </button>
+                  </td>
+                </tr>
+
+                <tr *ngIf="_waiting.length === 0">
+                  <td colspan="4" class="text-muted py-4">ไม่มีคิวที่พักไว้</td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<div *ngIf="page === 'status'">
+  <div class="screen-wrapper">
+    <div class="screen-card shadow-lg">
+
+      <!-- HEADER -->
+      <div class="header d-flex justify-content-between align-items-center">
+        <div class="logo text-start">
+          <span class="brand-text"> PAYMENT STATUS</span>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="content mt-4 fade-in">
+
+        <div class="table-responsive mobile-table">
+          <table class="table table-hover align-middle text-center mb-0 omise-table">
+            <thead class="table-header text-white">
+              <tr>
+                 <th>สถานะ</th>
+                <th>เลขที่สินค้า</th>
+                <th>Charge ID</th>
+                <th>ราคา</th>
+                <th>วันที่</th>
+                <th>รูปแบบการจ่าย</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let q of _datapayment" class="row-hover"
+                  (click)="openChargeDetail(q.transaction_id)">
+
+
+ <td class="text-muted small">
+                  <span class="badge bg-success" *ngIf="q.status_payment.includes('successful')">Successful</span>
+                   <span class="badge bg-success" *ngIf="q.status_payment.includes('SUCCESS')">Successful</span>
+                  <span class="badge bg-warning" *ngIf="q.status_payment.includes('pending')">Pending</span>
+                  <span class="badge bg-danger" *ngIf="q.status_payment.includes('failed')">Failed</span>
+                  <span class="badge bg-danger" *ngIf="q.status_payment.includes('TEST')">TEST</span>
+                </td>
+
+
+
+                <td class="fw-bold fs-5 text-primary">{{ q.order_number }}</td>
+                <td class="text-muted small">{{ q.charge_id }}</td>
+                <td class="text-muted small">฿{{ q.amount | number }}</td>
+
+                <td class="text-muted small">
+                  {{ q.date | date:'mediumDate' }} · {{ q.time }}
+                </td>
+
+                <td class="text-muted small">
+                  <span class="badge bg-success" *ngIf="q.payment.includes('promptpay')">PromptPay</span>
+                  <span class="badge bg-info" *ngIf="q.payment.includes('wechat_pay_mpm')">WeChat Pay</span>
+                  <span class="badge bg-primary" *ngIf="q.payment.includes('alipayplus_mpm')">Alipay</span>
+                   <span class="badge bg-dark" *ngIf="q.payment.includes('card')">CARD</span>
+                  <span class="badge bg-secondary" *ngIf="!q.payment">{{ q.payment }}</span>
+                </td>
+
+              </tr>
+
+              <tr *ngIf="_datapayment.length === 0">
+                <td colspan="5" class="text-muted py-4">ไม่มีข้อมูลการชำระเงิน</td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="chargeDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title fw-bold">รายละเอียดการชำระเงิน</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <p><strong>Order No:</strong> {{ _getbydata[0]?.order_number }}</p>
+        <p><strong>Charge ID:</strong> {{ _getbydata[0]?.charge_id }}</p>
+        <p><strong>Amount:</strong> ฿{{ _getbydata[0]?.amount }}</p>
+        <p><strong>Status:</strong> {{ _statusPayment }}</p>
+        <p ><strong>Slips:</strong>{{ _getbydata[0]?.slips }}</p>
+
+
+
+        <hr>
+
+        <h6 class="fw-bold">Raw JSON / XML</h6>
+        <pre class="json-box">{{ _getbydata[0]?.json | json }}</pre>
+
+      </div>
+      
+      
+      <div class="modal-footer">
+          <button class="btn btn-warning text-dark"
+                  (click)="reloadCharge(_getbydata[0]?.charge_id)">
+           Re-Check
+          </button> 
+
+          <button class="btn btn-primary"
+                  *ngIf="_statusPayment === 'successful'"
+                  (click)="printSlip()">
+            🖨️ พิมพ์สลิป
+          </button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,356 @@
+/* 🌟 GLOBAL THEME */
+* {
+  box-sizing: border-box;
+  font-family: 'Prompt', sans-serif;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+   width: 100%;
+  overflow: hidden;
+}
+
+🐯 BACKGROUND
+.display-root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* background: url('/Assets/background.jpg') center/cover no-repeat; */
+  position: relative;
+  overflow: hidden;
+}
+
+.display-root::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 0;
+}
+
+/* 📌 LEFT PANEL (main content area) */
+.left-panel {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.85) 0%, rgba(20, 20, 20, 0.9) 100%);
+  border-radius: 35px;
+  padding: 40px 30px;
+  backdrop-filter: blur(10px);
+
+  border: 4px solid #ff6b00;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.8),
+    0 0 80px rgba(255, 107, 0, 0.4),
+    inset 0 2px 0 rgba(255, 140, 0, 0.3);
+}
+
+.left-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 35px;
+  padding: 4px;
+  background: linear-gradient(135deg, #ff6b00, #ffaa00, #ff6b00);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* ========================== */
+/* 🟠 TOP SECTION */
+/* ========================== */
+.top-section {
+  text-align: center;
+}
+
+.brand-header {
+  text-align: center;
+  color: #fff;
+  font-size: 2.8rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, #ffffff 0%, #ffdd00 50%, #ff6b00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 3px 12px rgba(255, 107, 0, 0.8)) 
+          drop-shadow(0 0 20px rgba(255, 107, 0, 0.6));
+  animation: titleGlow 3s ease-in-out infinite;
+  text-shadow: 0 0 40px rgba(255, 107, 0, 0.8);
+}
+
+@keyframes titleGlow {
+  0%, 100% { 
+    filter: drop-shadow(0 3px 12px rgba(255, 107, 0, 0.8)) 
+            drop-shadow(0 0 20px rgba(255, 107, 0, 0.6)); 
+  }
+  50% { 
+    filter: drop-shadow(0 5px 20px rgba(255, 107, 0, 1)) 
+            drop-shadow(0 0 35px rgba(255, 140, 0, 0.9)); 
+  }
+}
+
+.ready-label {
+  margin-top: 15px;
+  padding: 14px 45px;
+  font-size: 1.6rem;
+  border-radius: 50px;
+  font-weight: 900;
+  color: #000000;
+  position: relative;
+  display: inline-block;
+
+  background: linear-gradient(135deg, #ffdd00 0%, #ffaa00 50%, #ff6b00 100%);
+  box-shadow: 
+    0 8px 25px rgba(255, 107, 0, 0.7),
+    0 0 40px rgba(255, 140, 0, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.2);
+  
+  animation: labelPulse 2s ease-in-out infinite;
+  border: 3px solid #ffffff;
+}
+
+@keyframes labelPulse {
+  0%, 100% { 
+    transform: scale(1); 
+    box-shadow: 0 8px 25px rgba(255, 107, 0, 0.7),
+                0 0 40px rgba(255, 140, 0, 0.5),
+                inset 0 2px 0 rgba(255, 255, 255, 0.6); 
+  }
+  50% { 
+    transform: scale(1.05); 
+    box-shadow: 0 10px 35px rgba(255, 107, 0, 0.9),
+                0 0 60px rgba(255, 140, 0, 0.7),
+                inset 0 2px 0 rgba(255, 255, 255, 0.8); 
+  }
+}
+
+/* ========================== */
+/* 🎯 MIDDLE SECTION */
+/* ========================== */
+.middle-section {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ========================== */
+/* 🎯 CURRENT QUEUE */
+/* ========================== */
+.current-queue-box {
+  background: linear-gradient(135deg, rgba(255, 80, 0, 0.25) 0%, rgba(255, 140, 0, 0.2) 100%);
+  padding: 45px 70px;
+  border-radius: 35px;
+  position: relative;
+
+  border: 5px solid #ff6b00;
+  backdrop-filter: blur(8px);
+  box-shadow: 
+    0 10px 50px rgba(255, 107, 0, 0.6),
+    0 0 80px rgba(255, 107, 0, 0.4),
+    inset 0 2px 0 rgba(255, 140, 0, 0.4),
+    inset 0 0 60px rgba(255, 80, 0, 0.15);
+
+  margin-top: 25px;
+}
+
+.current-queue-box::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 35px;
+  background: linear-gradient(135deg, #ff6b00, #ffaa00, #ff6b00);
+  z-index: -1;
+  animation: borderRotate 4s linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes borderRotate {
+  0% { filter: hue-rotate(0deg) brightness(1.2); }
+  100% { filter: hue-rotate(360deg) brightness(1.2); }
+}
+
+.current-queue {
+  font-size: 11rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 8px;
+  position: relative;
+
+  background: linear-gradient(135deg, #ffffff 0%, #ffdd00 50%, #ff6b00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  
+  filter: drop-shadow(0 6px 20px rgba(255, 107, 0, 0.9))
+          drop-shadow(0 0 40px rgba(255, 140, 0, 0.8))
+          drop-shadow(0 0 80px rgba(255, 107, 0, 0.6));
+  animation: numberGlow 2s ease-in-out infinite;
+}
+
+@keyframes numberGlow {
+  0%, 100% { 
+    filter: drop-shadow(0 6px 20px rgba(255, 107, 0, 0.9))
+            drop-shadow(0 0 40px rgba(255, 140, 0, 0.8))
+            drop-shadow(0 0 80px rgba(255, 107, 0, 0.6));
+  }
+  50% { 
+    filter: drop-shadow(0 8px 35px rgba(255, 107, 0, 1))
+            drop-shadow(0 0 60px rgba(255, 140, 0, 1))
+            drop-shadow(0 0 100px rgba(255, 107, 0, 0.8));
+  }
+}
+
+/* ========================== */
+/* 🟡 NEXT QUEUES */
+/* ========================== */
+.next-label {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin-top: 30px;
+  text-shadow: 0 0 20px rgba(255, 107, 0, 0.9),
+               0 0 40px rgba(255, 107, 0, 0.6);
+  letter-spacing: 1px;
+}
+
+.ticker-wrapper {
+  width: 100%;
+  height: 95px;
+  border-radius: 18px;
+  overflow: hidden;
+  margin-top: 12px;
+
+  background: rgba(0, 0, 0, 0.6);
+  border: 4px solid #ff6b00;
+
+  box-shadow: 
+    inset 0 0 30px rgba(255, 107, 0, 0.4),
+    0 6px 20px rgba(255, 107, 0, 0.4),
+    0 0 40px rgba(255, 107, 0, 0.3);
+}
+
+.ticker-content {
+  display: flex;
+  animation: moveTicker 12s linear infinite;
+  padding: 12px 0;
+}
+
+.ticker-item {
+  font-size: 2.6rem;
+  font-weight: 900;
+  flex: 0 0 auto;
+
+  background: linear-gradient(135deg, #ffdd00 0%, #ffaa00 50%, #ff8800 100%);
+  padding: 12px 40px;
+  border-radius: 15px;
+  margin-right: 25px;
+  color: #000000;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border: 3px solid #ffffff;
+}
+
+@keyframes moveTicker {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* ========================== */
+/* 🟣 WAITING QUEUE */
+/* ========================== */
+.waiting-container {
+  margin-top: 25px;
+  text-align: center;
+}
+
+.ticker-wrapper-waiting {
+  width: 170px;
+  height: 170px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(255, 80, 0, 0.25), rgba(255, 140, 0, 0.2));
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 12px auto 0;
+
+  border: 5px solid #ff6b00;
+  box-shadow: 
+    0 8px 30px rgba(255, 107, 0, 0.6),
+    0 0 50px rgba(255, 107, 0, 0.4),
+    inset 0 2px 0 rgba(255, 140, 0, 0.4),
+    inset 0 0 40px rgba(255, 80, 0, 0.15);
+}
+
+.current-queue-waiting {
+  font-size: 5.5rem;
+  color: #ffffff;
+  font-weight: 900;
+
+  background: linear-gradient(135deg, #ffffff 0%, #ffdd00 50%, #ff6b00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  
+  filter: drop-shadow(0 4px 15px rgba(255, 107, 0, 0.9))
+          drop-shadow(0 0 30px rgba(255, 140, 0, 0.7));
+}
+
+/* ========================== */
+/* 🐯 LOGO */
+/* ========================== */
+.bottom-section {
+  text-align: center;
+}
+
+.tiger-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tiger-logo img {
+  width: 150px;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.9))
+          drop-shadow(0 0 30px rgba(255, 107, 0, 0.5));
+}
+
+.tiger-logo div {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 900;
+  margin-top: 12px;
+  text-shadow: 0 0 20px rgba(255, 107, 0, 0.9),
+               0 0 40px rgba(255, 107, 0, 0.6);
+  letter-spacing: 2px;
+}
+
+/* ========================== */
+/* 🎨 UTILITY CLASSES */
+/* ========================== */
+.fw-bold {
+ font-size: 20rem;
+  font-weight: 700;
+}
+
+.mt-2 {
+  margin-top: 8px;
+}

@@ -1,0 +1,70 @@
+<div *ngIf="isSelectAppVisible || isAnimatingSelect" class="backdrop" (click)="closeDeleteAlert()">
+    <div class="shortcut-menu" [ngClass]="{'animate-alert-in' : isSelectAppVisible, 'animate-alert-out' : isAnimatingSelect}"
+        (click)="$event.stopPropagation()">
+        <div class="select-menu">
+            <div class="head">
+                <img src="assets/icon/car.svg" alt="">
+                <h1>Select quick app</h1>
+            </div>
+            <div class="app-container">
+                <div class="app-item" *ngFor="let app of appsSelect" (click)="toggleAppSelection(app)"
+                    [class.selected]="isSelected(app)">
+                    <a>
+                        <div class="status">
+                            <div class="diss" [ngClass]="{'hide': !isSelected(app)}">
+                                <p>-</p>
+                            </div>
+                            <div class="add" [ngClass]="{'hide': isSelected(app)}">
+                                <p>+</p>
+                            </div>
+                        </div>
+                        <div class="app-icon">
+                            <img [src]="app.img" [alt]="app.name">
+                        </div>
+                    </a>
+                    <p>{{ app.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bottom-bar">
+    <div class="container">
+        <div class="bar-item-wrap">
+            <div class="display-item" *ngFor="let app of appShow">
+                <a *ngIf="app.type === 'routing'" [routerLink]="app.path">
+                    <div class="app-icon">
+                        <img [src]="app.img" [alt]="app.name">
+                    </div>
+                    <p>{{ app.name }}</p>
+                </a>
+                <a *ngIf="app.type === 'alert'" (click)="onAppClick(app, $event)">
+                    <div class="app-icon">
+                        <img [src]="app.img" [alt]="app.name">
+                    </div>
+                    <p>{{ app.name }}</p>
+                </a>
+                <a *ngIf="app.type === 'link'" [href]="app.path">
+                    <div class="app-icon">
+                        <img [src]="app.img" [alt]="app.name">
+                    </div>
+                    <p>{{ app.name }}</p>
+                </a>
+            </div>
+            <div class="add-app" (click)="toggleAlert()">
+                <button>+</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="isPassAlertVisible || isAnimating" class="backdrop" (click)="closePassAlert()">
+    <app-pass-alert
+        [ngClass]="{'animate-alert-in': isPassAlertVisible, 'animate-alert-out': isAnimating}"></app-pass-alert>
+</div>
+
+<div *ngIf="isCarAlertVisible || isAnimating" class="backdrop" (click)="closeCarAlert()">
+    <app-car-alert
+        [ngClass]="{'animate-alert-in': isCarAlertVisible, 'animate-alert-out': isAnimating}"></app-car-alert>
+</div>
