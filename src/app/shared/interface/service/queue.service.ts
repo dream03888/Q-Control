@@ -26,14 +26,12 @@ export class QueueService {
 
 
 
- // 🔹 ฟัง event เมื่อ backend บอกให้ refresh
-  onQueueRefresh(): Observable<void> {
-    return new Observable((sub) => {
-      this.socket.on('queue_refresh', () => sub.next());
-      
-
-    });
-  }
+onQueueRefresh(): Observable<void> {
+  return new Observable((sub) => {
+    this.socket.off('queue_refresh'); // ⭐ สำคัญ
+    this.socket.on('queue_refresh', () => sub.next());
+  });
+}
 
   // 🔹 emit เพื่อแจ้ง backend ว่าอยากเช็ค/refresh
   requestRefresh() {
@@ -178,4 +176,39 @@ async getDataBestseller(startDate?:string, endDate?:string): Promise<ResponseDat
         return response;
       });
   }
+
+
+
+
+
+
+     async getAllData(): Promise<ResponseData> {
+    await this.socket.emit('get_data_active');
+    return await this.socket.fromOneTimeEvent<ResponseData>('return_get_data_active')
+      .then((response) => {
+        return response;
+      });
+  }
+
+
+
+
+  async UpdateProductActive(data:any): Promise<ResponseData> {
+    await this.socket.emit('req_update_active', data);
+    return await this.socket.fromOneTimeEvent<ResponseData>('return_get_data_active')
+      .then((response) => {
+        return response;
+      });
+  }
+
+
+
+
+
+
+
+
+
+
+
 }

@@ -3,6 +3,8 @@ import { Queue } from '../../../shared/interface/queue';
 import { Router } from '@angular/router';
 import { QueueService } from '../../../shared/interface/service/queue.service';
 import { SocketSupply } from '../../../app.module';
+import { Subject } from 'rxjs/internal/Subject';
+import { takeUntil } from 'rxjs';
 export interface QueueItem {
   id: number;
   queueNumber: string;
@@ -31,6 +33,8 @@ export class DashboardQueueComponent {
    isPlaying: boolean = false;
 isPlayingAudio = false;
 _queueString: string = '';
+private destroy$ = new Subject<void>();
+lastPlayedQueue: string | null = null;
 
   // ภาพโฆษณา: ใช้ภาพ “เบอร์เกอร์จริง” จาก Unsplash
    idx = 0;
@@ -59,40 +63,43 @@ _queueString: string = '';
     private sockets: SocketSupply
   ) {}
 
-  async ngOnInit() {   
-    // this.startSlide();
-    // await this.getCallQueue();
-    await this.getQueue();
-    await this.getWaitingQueue();
-    await this.getWaitingCountQueue();
+async ngOnInit() {
+  await this.getQueue();
 
-    this.getData.onQueueRefresh().subscribe(async () => {
+  this.getData.onQueueRefresh()
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(async () => {
       console.log('🔄 Refresh queue data!');
-      // await this.getCallQueue();
       await this.getQueue();
       await this.getWaitingQueue();
       await this.getWaitingCountQueue();
     });
 
-  this.sockets.emit("register_display"); // 📺 แจ้งว่าเป็นหน้าจอแสดงผล
+  this.sockets.emit("register_display");
 
-   this.sockets.on("play_queue_audio", async (data: any) => {
+  this.sockets.off("play_queue_audio"); // ⭐ กันซ้อน
+  this.sockets.on("play_queue_audio", async (data: any) => {
     console.log("📥 รับคิวใหม่", data.queue);
-
-    // ❗ อย่า update UI ตอนนี้
-    // this._callQueue = data.queue; ← ลบออก
-
-    // แทนที่ด้วย push เข้าคิวเสียง
     this.audioQueue.push(data);
-    console.log("🟦 เพิ่มคิวเสียง:", this.audioQueue);
     if (!this.isPlayingAudio) {
-    await  this.playNextAudio();
+      await this.playNextAudio();
     }
   });
 }
 
+ngOnDestroy(): void {
+  this.destroy$.next();
+  this.destroy$.complete();
+
+  this.sockets.off("play_queue_audio");
+  this.sockets.off("queue_refresh");
+
+  if (this.timer) clearInterval(this.timer);
+}
+
 
 async playNextAudio() {
+  // 🔴 ถ้าไม่มีคิว → ปลดสถานะแล้วจบ
   if (this.audioQueue.length === 0) {
     this.isPlayingAudio = false;
     return;
@@ -100,15 +107,29 @@ async playNextAudio() {
 
   this.isPlayingAudio = true;
 
-  const data = this.audioQueue.shift(); 
+  const data = this.audioQueue.shift();
+  if (!data) {
+    this.isPlayingAudio = false;
+    return;
+  }
 
-  // ⭐ อัปเดต UI ตอนนี้ทันที ก่อนเล่นเสียง
+  // 🛑 กันเล่นซ้ำคิวเดิม
+  if (this.lastPlayedQueue === data.queue) {
+    // เล่นตัวถัดไปแทน
+    await this.playNextAudio();
+    return;
+  }
+
+  // ⭐ บันทึกว่าคิวนี้ถูกเล่นแล้ว
+  this.lastPlayedQueue = data.queue;
+
+  // ⭐ อัปเดต UI ทันที
   this._queueString = data.queue;
   console.log("🟩 แสดงคิวพร้อมเริ่มเสียง:", this._queueString);
 
   const audioSrc = 'data:audio/mpeg;base64,' + data.audio;
 
-  // เล่นเสียง 3 รอบเหมือนเดิม
+  // 🔊 เล่นเสียง 3 รอบ
   for (let i = 1; i <= 3; i++) {
     const audio = new Audio(audioSrc);
     await new Promise<void>((resolve) => {
@@ -122,27 +143,13 @@ async playNextAudio() {
 
   console.log("🏁 คิวนี้เล่นเสียงจบ:", data.queue);
 
-  // ทำต่อ
-  this.playNextAudio();
+  // 🔁 เล่นตัวถัดไป
+  await this.playNextAudio();
 }
 
 
 
 
-// ✅ Helper delay
-private delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-  
-  ngOnDestroy(): void {
-    if (this.timer) clearInterval(this.timer);
-  }
-
-  // startSlide(): void {
-  //   this.timer = setInterval(() => {
-  //     this.idx = (this.idx + 1) % this.slides.length;
-  //   }, 5000);
-  // }
 
   // 👇 ตัวอย่างเมธอดเผื่อเชื่อม API/Socket ในอนาคต
   setQueues(current: string, next: string[]) {
