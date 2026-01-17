@@ -7,7 +7,9 @@ export const environment = {
   // socketEndpoint: 'http://192.168.15.80:9909',
   //socketEndpoint: 'http://192.168.15.42:9909',
   //  socketEndpoint: 'ws://10.0.0.100:9876',
-    socketEndpoint: 'http://swapp.dyndns.org:8080',
+    // socketEndpoint: 'http://swapp.dyndns.org:8080',
+            socketEndpoint: 'https://api-q-control-production-2dff.up.railway.app',
+
 
 
 // socketEndpoint: 'http://192.168.15.54:9000',

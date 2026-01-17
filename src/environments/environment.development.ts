@@ -1,7 +1,9 @@
 export const environment = {
 
 //  socketEndpoint: 'ws://10.0.0.100:9876',
-    socketEndpoint: 'http://swapp.dyndns.org:8080',
+    // socketEndpoint: 'http://swapp.dyndns.org:8080',
+        socketEndpoint: 'https://api-q-control-production-2dff.up.railway.app',
+
 
 
 

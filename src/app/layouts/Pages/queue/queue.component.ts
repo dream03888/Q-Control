@@ -2,7 +2,7 @@ import { Component, HostListener } from '@angular/core';
 import { jsonFormater, Queue } from '../../../shared/interface/queue';
 import { Router } from '@angular/router';
 import { QueueService } from '../../../shared/interface/service/queue.service';
-import { parseStringPromise } from 'xml2js'; // ต้องติดตั้ง xml2js ก่อน
+import { XMLParser } from 'fast-xml-parser';
 import { SocketSupply } from '../../../app.module';
 import { Subject } from 'rxjs/internal/Subject';
 import { takeUntil } from 'rxjs';
@@ -55,11 +55,12 @@ export class QueueComponent {
   showConfirmPopup = false;
   pendingQueue: { queue: string; transaction_id: number } | null = null;
   _allData: any[] = [];
+  
 
   constructor(
     private router: Router,
     private getData: QueueService,
-    private sockets: SocketSupply
+    private sockets: SocketSupply,
   ) {}
 
   async ngOnInit() {
@@ -123,7 +124,7 @@ export class QueueComponent {
 
     // 2️⃣ อัปเดตข้อมูลที่ UI ใช้อยู่จริง
     this._allData = this._allData.map((m) =>
-      m.product_id === menuId ? { ...m, active: checked } : m
+      m.product_id === menuId ? { ...m, active: checked } : m,
     );
   }
   async saveMenuSetting() {
@@ -157,7 +158,7 @@ export class QueueComponent {
 
     // 2️⃣ อัปเดตข้อมูลที่ UI ใช้อยู่จริง
     this._allData = this._allData.map((m) =>
-      m.product_id === menuId ? { ...m, active: checked } : m
+      m.product_id === menuId ? { ...m, active: checked } : m,
     );
   }
 
@@ -252,16 +253,39 @@ export class QueueComponent {
     this.showConfirmPopup = false;
     this.pendingQueue = null;
   }
-  playConfirmSound(base64Audio: string) {
-    try {
-      const audioSrc = 'data:audio/mpeg;base64,' + base64Audio;
-      const audio = new Audio(audioSrc);
+  private confirmAudio = new Audio();
 
-      audio.volume = 0.6; // 🔉 เบากว่า display
-      audio.play().catch(() => {});
-    } catch (e) {
-      console.error('❌ Operator sound error:', e);
+  async playConfirmSound(base64Audio: string) {
+    const audioSrc = 'data:audio/mpeg;base64,' + base64Audio;
+
+    this.confirmAudio.src = audioSrc;
+    this.confirmAudio.load(); // ⭐ สำคัญ
+    this.confirmAudio.playbackRate = 1.0; // ⭐ ช้าลง (0.5–1.0)
+
+    for (let i = 1; i <= 3; i++) {
+      console.log(`🔔 เสียงยืนยันรอบที่ ${i}`);
+
+      await this.playConfirmOnce();
+
+      if (i < 3) {
+        await this.delay(600); // เว้นจังหวะ
+      }
     }
+  }
+
+  private playConfirmOnce(): Promise<void> {
+    return new Promise((resolve) => {
+      this.confirmAudio.currentTime = 0;
+
+      this.confirmAudio.onended = () => resolve();
+      this.confirmAudio.onerror = () => resolve();
+
+      this.confirmAudio.play().catch(() => resolve());
+    });
+  }
+
+  private delay(ms: number) {
+    return new Promise((res) => setTimeout(res, ms));
   }
 
   openChargeModal(item: any) {
@@ -276,14 +300,14 @@ export class QueueComponent {
   // 🔹 ของเดิม
   holdQueue(q: any) {
     this._data = this._data.filter(
-      (x) => x.transaction_id !== q.transaction_id
+      (x) => x.transaction_id !== q.transaction_id,
     );
     this._hold.push(q);
   }
 
   returnQueue(q: any) {
     this._hold = this._hold.filter(
-      (x) => x.transaction_id !== q.transaction_id
+      (x) => x.transaction_id !== q.transaction_id,
     );
     this._data.push(q);
   }
@@ -323,7 +347,7 @@ export class QueueComponent {
   async updateTransactionWaiting(status: string, transactionId: number) {
     const data = await this.getData.update_transaction_waiting(
       status,
-      transactionId
+      transactionId,
     );
     if (data.status == 200) console.log('Transaction updated successfully');
   }
@@ -334,7 +358,7 @@ export class QueueComponent {
       this.startDate,
       this.endDate,
       this.startTime,
-      this.endTime
+      this.endTime,
     );
     if (data.status === 200) {
       this._datapayment = data.msg;
@@ -347,7 +371,7 @@ export class QueueComponent {
       this.startDate,
       this.endDate,
       this.startTime,
-      this.endTime
+      this.endTime,
     );
     if (data.status === 200) {
       this._datapayment = data.msg;
@@ -363,7 +387,7 @@ export class QueueComponent {
     const data = await this.getData.GetdataPaymentByData(
       this.selectedCharge,
       this.startDate,
-      this.endDate
+      this.endDate,
     );
     if (data.status === 200) {
       this._getbydata = Array.isArray(data.msg) ? data.msg : [data.msg];
@@ -385,17 +409,20 @@ export class QueueComponent {
               typeof c.json === 'string' &&
               c.json.trim().startsWith('<')
             ) {
-              const xmlObj = await parseStringPromise(c.json, {
-                explicitArray: false,
+              const parser = new XMLParser({
+                ignoreAttributes: false,
+                attributeNamePrefix: '',
               });
-              parsed = xmlObj.xml; // 📦 ดึงเฉพาะ object ภายใต้ <xml>...</xml>
+
+              const xmlObj = parser.parse(c.json);
+              parsed = xmlObj.xml;
             }
           } catch (e) {
             console.error('❌ Error parsing json/xml:', e);
           }
 
           return { ...c, json: parsed };
-        })
+        }),
       );
 
       const modalEl = document.getElementById('chargeDetailModal');
@@ -409,7 +436,7 @@ export class QueueComponent {
     const data = await this.getData.update_transaction_json(
       json,
       this._statusPayment,
-      this.transactionId
+      this.transactionId,
     );
     if (data.status === 200) {
       console.log('✅ JSON data updated successfully:', data.msg);
