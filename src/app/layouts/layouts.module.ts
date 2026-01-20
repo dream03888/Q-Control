@@ -7,6 +7,7 @@ import { NavbarComponent } from "./components/navbar/navbar.component";
 import { BottomBarComponent } from "./components/bottom-bar/bottom-bar.component";
 import { DashboardStatusComponent } from './Pages/dashboard-status/dashboard-status.component';
 import { DashboardQueueComponent } from './Pages/dashboard-queue/dashboard-queue.component';
+import { ReportComponent } from './Pages/report/report.component';
 
 
 
@@ -17,6 +18,7 @@ import { DashboardQueueComponent } from './Pages/dashboard-queue/dashboard-queue
     QueueComponent,
          DashboardStatusComponent,
          DashboardQueueComponent,
+         ReportComponent
   ],
   imports: [
     CommonModule,

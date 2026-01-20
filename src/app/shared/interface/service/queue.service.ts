@@ -222,6 +222,13 @@ async getDataBestseller(startDate?:string, endDate?:string): Promise<ResponseDat
 
 
 
+ async getReport(startDate:string ,endDate:string): Promise<ResponseData> {
+    await this.socket.emit('reportData',startDate,endDate);
+    return await this.socket.fromOneTimeEvent<ResponseData>('return_reportData')
+      .then((response) => {
+        return response;
+      });
+  }
 
 
 

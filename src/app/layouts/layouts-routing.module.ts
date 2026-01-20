@@ -3,6 +3,7 @@ import { RouterModule, Routes } from "@angular/router";
 import { QueueComponent } from "./Pages/queue/queue.component";
 import { DashboardStatusComponent } from "./Pages/dashboard-status/dashboard-status.component";
 import { DashboardQueueComponent } from "./Pages/dashboard-queue/dashboard-queue.component";
+import { ReportComponent } from "./Pages/report/report.component";
 
 
 
@@ -12,6 +13,7 @@ const routes: Routes = [
     { path: 'queueu', component: QueueComponent },
     { path: 'dashboard-status', component: DashboardStatusComponent },
     { path: 'dashboard-queue', component: DashboardQueueComponent },
+        { path: 'report', component: ReportComponent },
 
 
   

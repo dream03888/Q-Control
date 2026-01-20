@@ -1,0 +1,144 @@
+<div class="page">
+
+    <!-- ===== Header ===== -->
+    <div class="header">
+        <div class="left">
+            <div class="kicker">Safari World • Sales Report</div>
+            <div class="title">Daily Transaction Report</div>
+            <div class="sub">แสดง 1 แถวต่อ 1 Transaction พร้อมรายการสินค้าในบิล</div>
+        </div>
+
+        <div class="right">
+            <button class="btn ghost" type="button" (click)="refresh()">🔄 Refresh</button>
+            <button class="btn primary" type="button" (click)="exportCsv()">⬇ Export CSV</button>
+        </div>
+    </div>
+
+    <!-- ===== Filters ===== -->
+    <div class="filters">
+        <div class="field">
+            <div class="label">Start date</div>
+            <input type="date" [(ngModel)]="startDate" class="input" />
+        </div>
+
+        <div class="field">
+            <div class="label">End date</div>
+            <input type="date" [(ngModel)]="endDate" class="input" />
+        </div>exportCsv
+
+        <div class="field grow">
+            <div class="label">Search (Order / Queue / Tx)</div>
+            <input class="input" placeholder="เช่น TIGER-2026..., A015, 1730" [(ngModel)]="q"
+                (input)="applyFilters()" />
+        </div>
+
+        <div class="field">
+            <div class="label">Payment</div>
+            <select class="input" [(ngModel)]="payment" (change)="applyFilters()">
+                <option value="">All</option>
+                <option value="CASH">CASH</option>
+                <option value="CARD">CARD</option>
+                <option value="THAIQRCODE">THAIQRCODE</option>
+            </select>
+        </div>
+
+        <button class="btn" type="button" (click)="load()">ค้นหา</button>
+    </div>
+
+    <!-- ===== Summary Cards ===== -->
+    <div class="summary">
+        <div class="card">
+            <div class="cap">Transactions</div>
+            <div class="val">{{ filtered.length }}</div>
+        </div>
+        <div class="card">
+            <div class="cap">Total (After VAT)</div>
+            <div class="val">{{ sum(filtered, 'after_vat') | number:'1.2-2' }}</div>
+        </div>
+        <div class="card">
+            <div class="cap">VAT 7%</div>
+            <div class="val">{{ sum(filtered, 'vat_amount') | number:'1.2-2' }}</div>
+        </div>
+        <div class="card">
+            <div class="cap">Subtotal</div>
+            <div class="val">{{ sum(filtered, 'before_vat') | number:'1.2-2' }}</div>
+        </div>
+    </div>
+
+    <!-- ===== Table ===== -->
+    <div class="tableWrap">
+        <table class="grid">
+            <thead>
+                <tr>
+                    <th class="mono" (click)="sortBy('transaction_id')">TX</th>
+                    <th (click)="sortBy('order_number')">Order</th>
+                    <th (click)="sortBy('queue')">Queue</th>
+                    <th (click)="sortBy('payment')">Payment</th>
+                    <th>Items</th>
+                    <th class="num" (click)="sortBy('before_vat')">Subtotal</th>
+                    <th class="num" (click)="sortBy('vat_amount')">VAT</th>
+                    <th class="num" (click)="sortBy('after_vat')">Total</th>
+                    <th class="mono" (click)="sortBy('time')">Time</th>
+                    <th>Preview</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let r of filtered; trackBy: trackByTx">
+                    <td class="mono">{{ r.transaction_id }}</td>
+                    <td class="mono">{{ r.order_number }}</td>
+                    <td class="mono">{{ r.queue || '-' }}</td>
+                    <td class="mono">{{ r.payment || '-' }}</td>
+
+                    <!-- Items cell -->
+                    <td class="itemsCell">
+                        <div class="items">
+                            <div class="line" *ngFor="let it of r.items">
+                                <div class="name">
+                                    {{ it.product_name }}
+                                    <span class="muted" *ngIf="it.option_name_thai">
+                                        + {{ it.option_name_thai }} x{{ it.option_qty }}
+                                    </span>
+                                </div>
+                                <div class="qty mono">x{{ it.qty }}</div>
+                                <div class="price mono">{{ (it.qty * it.unit_price + (it.option_sum || 0)) |
+                                    number:'1.2-2' }}</div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="num mono">{{ r.before_vat | number:'1.2-2' }}</td>
+                    <td class="num mono">{{ r.vat_amount | number:'1.2-2' }}</td>
+                    <td class="num mono total">{{ r.after_vat | number:'1.2-2' }}</td>
+                    <td class="mono">{{ r.time }}</td>
+                    <td class="center">
+                        <button class="btn small" (click)="printSlip(r)">
+                            🔍 Preview
+                        </button>
+                    </td>
+                </tr>
+
+                <tr *ngIf="filtered.length === 0">
+                    <td colspan="9" class="empty">ไม่พบข้อมูล</td>
+                </tr>
+            </tbody>
+
+            <tfoot *ngIf="filtered.length > 0">
+                <tr>
+                    <td colspan="5" class="footLabel">รวมทั้งหมด</td>
+                    <td class="num mono">{{ sum(filtered,'before_vat') | number:'1.2-2' }}</td>
+                    <td class="num mono">{{ sum(filtered,'vat_amount') | number:'1.2-2' }}</td>
+                    <td class="num mono total">{{ sum(filtered,'after_vat') | number:'1.2-2' }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+</div>
+
+
+<!-- ===== Slip Preview Modal ===== -->
+
+
+

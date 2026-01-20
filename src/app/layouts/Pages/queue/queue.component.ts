@@ -521,6 +521,9 @@ export class QueueComponent {
     this.router.navigate(['/dashboard-queue']);
   }
 
+    async ClickReport() {
+    this.router.navigate(['/report']);
+  }
   // =========================
   // (OPTIONAL) OLD MODAL UTILS
   // =========================
