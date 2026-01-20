@@ -24,8 +24,9 @@ export class DashboardQueueComponent {
 
  // คิวปัจจุบัน + คิวถัดไป (ตัวอย่างข้อมูล)
   currentQueue = 'A015';
-  nextQueues: string[] = ['A016', 'A017', 'A018'];
   _data: Queue[] = [{} as Queue];
+    nextQueues: Queue[] = [];        // ⭐ Fix แสดงแค่ 5 ช่อง
+
   _callQueue: Queue[] = [{} as Queue];
   _waitingQueue: Queue[] = [{} as Queue];
   _waitingCountQueue: number = 0;
@@ -152,17 +153,28 @@ async playNextAudio() {
 
 
   // 👇 ตัวอย่างเมธอดเผื่อเชื่อม API/Socket ในอนาคต
-  setQueues(current: string, next: string[]) {
-    this.currentQueue = current;
-    this.nextQueues = next.slice(0, 3);
-  }
+  // setQueues(current: string, next: string[]) {
+  //   this.currentQueue = current;
+  //   this.nextQueues = next.slice(0, 3);
+  // }
 
   async getQueue() {
     const data = await this.getData.getQueue();
-    if (data.status == 200) {
-      this._data = data.msg;
-      console.log(this._data);
+   if (data.status == 200) {
+    this._data = data.msg;
+
+    // เอามาแค่ 5 ตัวแรก
+    const queues = this._data.slice(0, 5);
+
+    // ถ้ามีน้อยกว่า 5 → เติมช่องว่าง
+    while (queues.length < 5) {
+      queues.push({ queue: '' } as Queue);
     }
+
+    this.nextQueues = queues;
+
+    console.log('Next Queues (5 box fixed):', this.nextQueues);
+  }
   }
 
   async getWaitingQueue() {

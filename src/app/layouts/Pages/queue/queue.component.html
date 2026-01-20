@@ -10,71 +10,65 @@
   <!-- DESKTOP MENU -->
   <div class="nav-buttons d-none d-md-flex gap-3">
     <button class="btn" [ngClass]="{ 'btn-warning text-dark': page === 'queue', 'btn-outline-light': page !== 'queue' }"
-      (click)="page = 'queue'">
+      (click)="setPage('queue')">
       🍔 เรียก Queue
     </button>
 
     <button class="btn"
       [ngClass]="{ 'btn-warning text-dark': page === 'status', 'btn-outline-light': page !== 'status' }"
-      (click)="page = 'status'">
+      (click)="setPage('status')">
       💳 เช็คสถานะหลังบ้าน
     </button>
 
     <button class="btn" [ngClass]="{ 'btn-warning text-dark': page === 'menu', 'btn-outline-light': page !== 'menu' }"
-      (click)="page = 'menu'">
+      (click)="setPage('menu')">
       เมนูอาหาร
     </button>
-    <button class="btn btn-success" (click)="ClickDashboard()">♥Dashboard</button>
-    <button class="btn btn-success" (click)="ClickDashboardQueue(); toggleMenu()">📊 Dashboard Queue</button>
 
+    <button class="btn btn-success" (click)="ClickDashboard()">♥ Dashboard</button>
+    <button class="btn btn-success" (click)="ClickDashboardQueue()">📊 Dashboard Queue</button>
   </div>
 
-  <!-- MOBILE BURGER BUTTON -->
+  <!-- MOBILE BURGER -->
   <button class="btn btn-outline-light d-md-none" (click)="toggleMenu()">
     <i class="fa-solid fa-bars fs-3"></i>
   </button>
 </nav>
 
-<!-- MOBILE DROPDOWN MENU -->
+<!-- MOBILE MENU -->
 <div class="mobile-menu d-md-none" [class.open]="menuOpen">
-  <button class="mobile-item" (click)="page='queue'; toggleMenu()">🍔 เรียก Queue</button>
-  <button class="mobile-item" (click)="page='status'; toggleMenu()">💳 เช็คสถานะหลังบ้าน</button>
-  <button class="mobile-item" (click)="page='menu'; toggleMenu()">Menu</button>
-  <button class="mobile-item" (click)="ClickDashboard(); toggleMenu()">♥ Dashboard</button>
-  <button class="mobile-item" (click)="ClickDashboardQueue(); toggleMenu()">📊 Dashboard Queue</button>
-
+  <button class="mobile-item" (click)="setPage('queue')">🍔 เรียก Queue</button>
+  <button class="mobile-item" (click)="setPage('status')">💳 เช็คสถานะหลังบ้าน</button>
+  <button class="mobile-item" (click)="setPage('menu')">🍔 เมนูอาหาร</button>
+  <button class="mobile-item" (click)="ClickDashboard()">♥ Dashboard</button>
+  <button class="mobile-item" (click)="ClickDashboardQueue()">📊 Dashboard Queue</button>
 </div>
 
-<!-- 🧾 หน้าเรียก Queue -->
+<!-- ========================= QUEUE PAGE ========================= -->
 <div *ngIf="page === 'queue'">
   <div class="screen-wrapper">
     <div class="screen-card shadow-lg">
 
       <!-- HEADER -->
       <div class="header d-flex justify-content-between align-items-center">
-        <div class="logo text-start">
-          <span class="brand-text"> TIGER BURGER QUEUE</span>
-        </div>
+        <span class="brand-text">TIGER BURGER QUEUE</span>
 
-        <!-- ปุ่มสลับหน้า -->
+        <!-- TAB -->
         <div class="tab-buttons d-flex gap-3">
-          <!-- <button class="tab-btn" [class.active]="activeTab === 'main'" (click)="switchTab('main')">
-            <i class="fa-solid fa-list me-2"></i> คิวที่รอเรียก
-          </button> -->
+          <button class="tab-btn" [class.active]="activeTab === 'main'" (click)="switchTab('main')">
+            📋 คิวที่รอเรียก
+          </button>
 
-          <!-- <button class="tab-btn position-relative" [class.active]="activeTab === 'hold'" (click)="switchTab('hold')">
-            <i class="fa-solid fa-pause me-2"></i> คิวที่พักไว้
-            <span *ngIf="_hold.length > 0" class="badge-count">
-              {{ _hold.length }}
-            </span>
-          </button> -->
+          <button class="tab-btn" [class.active]="activeTab === 'errorlist'" (click)="switchTab('errorlist')">
+            ⏸ คิวที่พักไว้
+          </button>
         </div>
       </div>
 
       <!-- CONTENT -->
       <div class="content mt-4">
 
-        <!-- 🟦 MAIN QUEUE -->
+        <!-- MAIN QUEUE -->
         <div *ngIf="activeTab === 'main'" class="fade-in">
 
           <div class="table-responsive mobile-table">
@@ -83,7 +77,6 @@
                 <tr>
                   <th>คิว</th>
                   <th>เวลา</th>
-                  <!-- <th>สถานะ</th> -->
                   <th>จัดการ</th>
                 </tr>
               </thead>
@@ -92,34 +85,30 @@
                 <tr *ngFor="let q of _data" [class.active-row]="playing === q.queue">
 
                   <td class="fw-bold fs-4 text-primary">{{ q.queue }}</td>
-
-                  <td class="text-muted small"> {{ q.time }} </td>
-
+                  <td class="text-muted small">{{ q.time }}</td>
 
                   <td>
-                    <button class="btn btn-warning btn-call" (click)="CallQueueAPI(q.queue , q.transaction_id)">
+                    <button class="btn btn-warning btn-call" (click)="enqueueQueue(q.queue, q.transaction_id)">
                       📣 เรียก
                     </button>
+
                     <button class="btn btn-primary btn-call" (click)="updateTransaction(q.transaction_id)">
-                      📣 ยืนยัน
+                      ✅ ยืนยัน
                     </button>
                   </td>
-
-
                 </tr>
 
                 <tr *ngIf="_data.length === 0">
-                  <td colspan="4" class="text-muted py-4">ไม่มีคิวที่รอเรียก</td>
+                  <td colspan="3" class="text-muted py-4">ไม่มีคิวที่รอเรียก</td>
                 </tr>
 
               </tbody>
             </table>
           </div>
-
         </div>
 
-        <!-- 🟨 HOLD QUEUE -->
-        <div *ngIf="activeTab === 'hold'" class="fade-in">
+        <!-- HOLD QUEUE -->
+        <div *ngIf="activeTab === 'errorlist'" class="fade-in">
 
           <div class="table-responsive mobile-table">
             <table class="table table-hover align-middle text-center mb-0">
@@ -140,7 +129,7 @@
                     <span class="badge bg-warning text-dark px-2 py-1">พัก</span>
                   </td>
                   <td>
-                    <button class="btn btn-success btn-call" (click)="updateTransactionWaiting('1',q.transaction_id)">
+                    <button class="btn btn-success btn-call" (click)="updateTransactionWaiting('1', q.transaction_id)">
                       ▶️ คืนคิว
                     </button>
                   </td>
@@ -153,7 +142,6 @@
               </tbody>
             </table>
           </div>
-
         </div>
 
       </div>
@@ -161,22 +149,49 @@
   </div>
 </div>
 
-
-
+<!-- ========================= PAYMENT STATUS ========================= -->
+<!-- ========================= PAYMENT STATUS PAGE ========================= -->
+<!-- ========================= PAYMENT STATUS PAGE ========================= -->
 <div *ngIf="page === 'status'">
   <div class="screen-wrapper">
     <div class="screen-card shadow-lg">
 
-      <!-- HEADER -->
+      <!-- HEADER + SWITCH -->
       <div class="header d-flex justify-content-between align-items-center">
-        <div class="logo text-start">
-          <span class="brand-text"> PAYMENT STATUS</span>
+        <span class="brand-text">PAYMENT STATUS</span>
+
+        <!-- SWITCH TAB -->
+        <div class="tab-buttons d-flex gap-3">
+
+          <button class="tab-btn" [class.active]="statusTab === 'success'" (click)="switchStatusTab('success')">
+            ✅ สำเร็จ
+          </button>
+
+
+
+          <button class="tab-btn" [class.active]="statusTab === 'error'" (click)="switchStatusTab('error')">
+            ❌ Error
+          </button>
+
+
         </div>
       </div>
 
       <!-- CONTENT -->
       <div class="content mt-4 fade-in">
-
+        <div class="row mb-3">
+          <div class="col-md-4 ms-auto">
+            <div class="input-group shadow-sm">
+              <span class="input-group-text bg-warning text-dark fw-bold">
+                🔍 ค้นหาเลขที่สินค้า
+              </span>
+             <input type="text"
+  class="form-control"
+  placeholder="ค้นหาเลขที่สินค้า เช่น 0006"
+  [(ngModel)]="searchText">>
+            </div>
+          </div>
+        </div>
         <div class="table-responsive mobile-table">
           <table class="table table-hover align-middle text-center mb-0 omise-table">
             <thead class="table-header text-white">
@@ -187,43 +202,69 @@
                 <th>ราคา</th>
                 <th>วันที่</th>
                 <th>รูปแบบการจ่าย</th>
+                <th>Repint</th>
               </tr>
             </thead>
 
             <tbody>
-              <tr *ngFor="let q of _datapayment" class="row-hover" (click)="openChargeDetail(q.transaction_id)">
 
 
-                <td class="text-muted small">
-                  <span class="badge bg-success" *ngIf="q.status_payment.includes('successful')">Successful</span>
-                  <span class="badge bg-success" *ngIf="q.status_payment.includes('SUCCESS')">Successful</span>
-                  <span class="badge bg-warning" *ngIf="q.status_payment.includes('pending')">Pending</span>
-                  <span class="badge bg-danger" *ngIf="q.status_payment.includes('failed')">Failed</span>
-                  <span class="badge bg-danger" *ngIf="q.status_payment.includes('TEST')">TEST</span>
+              <!-- DATA ROW -->
+              <tr *ngFor="let q of filteredPayments" class="row-hover" (click)="openChargeDetail(q.transaction_id)">
+
+                <!-- STATUS -->
+                <td>
+
+
+                  <span class="badge bg-success"
+                    *ngIf="statusTab !== 'error' && (q.status_payment?.includes('SUCCESS') || q.status_payment?.includes('SUCCESS'))">
+                    Successful
+                  </span>
+
+
+
+                  <span class="badge bg-danger"
+                    *ngIf="statusTab == 'error' && (q.status_payment?.includes('FAIL') || q.status_payment?.includes('USER CANCEL') || q.status_payment?.includes('CALL HELP - GHL') )  ">
+                    Failed
+                  </span>
                 </td>
 
-
-
+                <!-- ORDER -->
                 <td class="fw-bold fs-5 text-primary">{{ q.order_number }}</td>
+
+                <!-- CHARGE -->
                 <td class="text-muted small">{{ q.charge_id }}</td>
+
+                <!-- AMOUNT -->
                 <td class="text-muted small">฿{{ q.amount | number }}</td>
 
+                <!-- DATE -->
                 <td class="text-muted small">
                   {{ q.date | date:'mediumDate' }} · {{ q.time }}
                 </td>
 
-                <td class="text-muted small">
-                  <span class="badge bg-success" *ngIf="q.payment.includes('promptpay')">PromptPay</span>
-                  <span class="badge bg-info" *ngIf="q.payment.includes('wechat_pay_mpm')">WeChat Pay</span>
-                  <span class="badge bg-primary" *ngIf="q.payment.includes('alipayplus_mpm')">Alipay</span>
-                  <span class="badge bg-dark" *ngIf="q.payment.includes('card')">CARD</span>
-                  <span class="badge bg-secondary" *ngIf="!q.payment">{{ q.payment }}</span>
+                <!-- PAYMENT -->
+                <td>
+                  <span class="badge bg-success" *ngIf="q.payment?.includes('THAIQRCODE')">THAIQRCODE</span>
+                  <span class="badge bg-info" *ngIf="q.payment?.includes('WECHATPAY')">WECHATPAY</span>
+                  <span class="badge bg-primary" *ngIf="q.payment?.includes('ALIPAY+')">ALIPAY+</span>
+                  <span class="badge bg-dark" *ngIf="q.payment?.includes('CARD')">CARD</span>
+                  <span class="badge bg-secondary" *ngIf="!q.payment">N/A</span>
                 </td>
 
+                <td>
+                    <button class="btn btn-primary" (click)="sendToPrinter(q)">
+          🖨️ พิมพ์สลิป
+        </button>
+
+                </td>
               </tr>
 
-              <tr *ngIf="_datapayment.length === 0">
-                <td colspan="5" class="text-muted py-4">ไม่มีข้อมูลการชำระเงิน</td>
+              <!-- EMPTY -->
+              <tr *ngIf="filteredPayments.length === 0">
+                <td colspan="6" class="text-muted py-4">
+                  ไม่มีข้อมูลในหมวดนี้
+                </td>
               </tr>
 
             </tbody>
@@ -235,7 +276,8 @@
   </div>
 </div>
 
-<!-- 🧾 หน้าเมนูอาหาร -->
+
+<!-- ========================= MENU PAGE ========================= -->
 <div *ngIf="page === 'menu'">
 
   <h3 class="title">🍔 ตั้งค่าเมนูอาหาร</h3>
@@ -259,7 +301,8 @@
         </td>
 
         <td class="text-center">
-          <button class="btn" [ngClass]="m.active ? 'btn-danger' : 'btn-success'" (click)="toggleMenuList(m.product_id, !m.active)">
+          <button class="btn" [ngClass]="m.active ? 'btn-danger' : 'btn-success'"
+            (click)="toggleMenuList(m.product_id, !m.active)">
             {{ m.active ? 'ปิดเมนู' : 'เปิดเมนู' }}
           </button>
         </td>
@@ -267,7 +310,6 @@
     </tbody>
   </table>
 
-  <!-- 💾 SAVE -->
   <div class="text-end mt-3">
     <button class="btn btn-primary" (click)="saveMenuSetting()">
       💾 บันทึกการตั้งค่า
@@ -275,49 +317,7 @@
   </div>
 </div>
 
-
-<div class="modal fade" id="chargeDetailModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-
-      <div class="modal-header bg-warning text-dark">
-        <h5 class="modal-title fw-bold">รายละเอียดการชำระเงิน</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body">
-
-        <p><strong>Order No:</strong> {{ _getbydata[0]?.order_number }}</p>
-        <p><strong>Charge ID:</strong> {{ _getbydata[0]?.charge_id }}</p>
-        <p><strong>Amount:</strong> ฿{{ _getbydata[0]?.amount }}</p>
-        <p><strong>Status:</strong> {{ _statusPayment }}</p>
-        <p><strong>Slips:</strong>{{ _getbydata[0]?.slips }}</p>
-
-
-
-        <hr>
-
-        <h6 class="fw-bold">Raw JSON / XML</h6>
-        <pre class="json-box">{{ _getbydata[0]?.json | json }}</pre>
-
-      </div>
-
-
-      <div class="modal-footer">
-        <button class="btn btn-warning text-dark" (click)="reloadCharge(_getbydata[0]?.charge_id)">
-          Re-Check
-        </button>
-
-        <button class="btn btn-primary" *ngIf="_statusPayment === 'successful'" (click)="printSlip()">
-          🖨️ พิมพ์สลิป
-        </button>
-        <button class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
-      </div>
-
-    </div>
-  </div>
-</div>
-
+<!-- ========================= CONFIRM POPUP ========================= -->
 <div class="queue-popup" *ngIf="showConfirmPopup">
   <div class="popup-card">
     <h5>📣 เรียกคิว {{ pendingQueue?.queue }}</h5>
@@ -331,6 +331,48 @@
       <button class="btn btn-success" (click)="confirmQueueDone()">
         ✅ รับแล้ว
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================= PAYMENT MODAL ========================= -->
+<div class="modal fade" id="chargeDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title fw-bold">รายละเอียดการชำระเงิน</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <p><strong>Order No:</strong> {{ _getbydata[0]?.order_number }}</p>
+        <p><strong>Charge ID:</strong> {{ _getbydata[0]?.charge_id }}</p>
+        <p><strong>Amount:</strong> ฿{{ _getbydata[0]?.amount }}</p>
+        <p><strong>Status:</strong> {{ _statusPayment }}</p>
+        <p><strong>Slip:</strong> {{ _getbydata[0]?.slips }}</p>
+
+
+        <hr>
+
+        <h6 class="fw-bold">Raw JSON / XML</h6>
+        <pre class="json-box">{{ _getbydata[0]?.json | json }}</pre>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-warning text-dark" (click)="reloadCharge(_getbydata[0]?.charge_id)">
+          Re-Check
+        </button>
+
+        <button class="btn btn-primary" (click)="printSlip()">
+          🖨️ พิมพ์สลิป
+        </button>
+
+        <button class="btn btn-secondary" data-bs-dismiss="modal">
+          ปิด
+        </button>
+      </div>
+
     </div>
   </div>
 </div>

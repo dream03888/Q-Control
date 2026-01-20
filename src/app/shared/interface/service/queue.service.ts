@@ -11,7 +11,6 @@ import { HttpClient } from '@angular/common/http';
 export class QueueService {
   
   constructor(private socket: SocketSupply , private http: HttpClient) { }
-  private apiUrl = 'http://localhost:5000/print'; // 👈 URL ฝั่ง C#
 
 
 
@@ -23,6 +22,11 @@ export class QueueService {
   });
 }
 
+printToWpf(order_number: string) {
+  return this.http.post("http://localhost:5555/print", {
+    order_number: order_number
+  });
+}
 
 
 
@@ -93,15 +97,20 @@ onQueueRefresh(): Observable<void> {
   }
   ////-----------------------------------
 
-    async GetdataPayment(startDate: string, endDate: string , startTime: string , endTime: string): Promise<ResponseData> {
-    await this.socket.emit('GetdataPayment', startDate, endDate, startTime, endTime);
+  //   async GetdataPayment(startDate: string, endDate: string , startTime: string , endTime: string): Promise<ResponseData> {
+  //   await this.socket.emit('GetdataPayment', startDate, endDate, startTime, endTime);
+  //   return await this.socket.fromOneTimeEvent<ResponseData>('return_GetdataPayment')
+  //     .then((response) => { 
+  //       return response;
+  //     });
+  // }
+  async GetdataPayment(): Promise<ResponseData> {
+    await this.socket.emit('GetdataPayment');
     return await this.socket.fromOneTimeEvent<ResponseData>('return_GetdataPayment')
       .then((response) => { 
         return response;
       });
   }
-
-
     async GetdataPaymentByData(params:any , startDate: string , endDate: string): Promise<ResponseData> {
     await this.socket.emit('GetdataPaymentByData', params, startDate, endDate);
     return await this.socket.fromOneTimeEvent<ResponseData>('return_GetdataPaymentByData')
@@ -202,6 +211,13 @@ async getDataBestseller(startDate?:string, endDate?:string): Promise<ResponseDat
   }
 
 
+  async getDataError(): Promise<ResponseData> {
+    await this.socket.emit('getDataError');
+    return await this.socket.fromOneTimeEvent<ResponseData>('return_getDataError')
+      .then((response) => {
+        return response;
+      });
+  }
 
 
 

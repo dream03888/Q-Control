@@ -1,43 +1,54 @@
-<div class="display-root">
+<div class="screen-root">
 
-  <div class="left-panel">
+  <div class="queue-board">
 
-      <!-- 🔶 TOP SECTION -->
-      <div class="top-section">
-        <div class="brand-header">SAFARI WORLD TIGER BURGER</div>
-        <div class="ready-label">READY TO SERVE</div>
-      </div>
+    <!-- HEADER -->
+    <div class="header">
+      <div class="title">SAFARI WORLD TIGER BURGER</div>
 
-      <!-- 🔶 CURRENT QUEUE -->
-      <div class="middle-section">
-        <div class="current-queue-box">
-            <div class="current-queue" >{{ _queueString }}</div>
+      <div class="ready-row">
+        <div class="ready-text">
+          พร้อมเสิร์ฟ<br />
+          <small>Ready to serve</small>
         </div>
 
-        <!-- 🔶 NEXT QUEUE -->
-        <div class="next-label">NEXT QUEUES</div>
-        <div class="ticker-wrapper">
-            <div class="ticker-content">
-                <div class="ticker-item" *ngFor="let q of _data">{{ q.queue }}</div>
-            </div>
-        </div>
-
-        <!-- 🔶 WAITING QUEUE -->
-        <div class="waiting-container">
-          <div class="next-label">WAITING QUEUE</div>
-          <div class="ticker-wrapper-waiting">
-            <div class="current-queue-waiting">{{ _waitingCountQueue }}</div>
-          </div>
+        <div class="ready-box">
+          {{ _queueString || '-' }}
         </div>
       </div>
+    </div>
 
-      <!-- 🔶 LOGO -->
-      <div class="bottom-section">
-        <div class="tiger-logo">
-            <img src="Assets/TGBG_LOGO BIGBIG.png" />
-            <div class="fw-bold mt-2">TIGER BURGER</div>
-        </div>
+    <!-- BODY -->
+    <div class="body">
+
+      <!-- NEXT QUEUE -->
+      <div class="left-panel">
+        <div class="next-title">คิวถัดไป / Next Queue</div>
+
+        <div class="next-list">
+  <div class="next-item" *ngFor="let q of nextQueues">
+    {{ q.queue || '-' }}
+  </div>
+</div>
+
       </div>
+
+      <!-- LOGO + WAITING -->
+      <div class="right-panel">
+
+        <div class="logo-box">
+          <img src="Assets/TGBG_LOGO BIGBIG.png" />
+          <div class="logo-text">TIGER BURGER</div>
+        </div>
+
+        <div class="waiting-box">
+          <div class="waiting-title">All Queues</div>
+          <div class="waiting-number">{{ _waitingCountQueue }}</div>
+        </div>
+
+      </div>
+
+    </div>
 
   </div>
 

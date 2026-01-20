@@ -1,5 +1,5 @@
 import { Component, HostListener } from '@angular/core';
-import { jsonFormater, Queue } from '../../../shared/interface/queue';
+import { Queue } from '../../../shared/interface/queue';
 import { Router } from '@angular/router';
 import { QueueService } from '../../../shared/interface/service/queue.service';
 import { XMLParser } from 'fast-xml-parser';
@@ -10,6 +10,9 @@ import Swal from 'sweetalert2';
 
 declare var bootstrap: any;
 
+type Page = 'queue' | 'status' | 'menu';
+type Tab = 'main' | 'errorlist';
+
 @Component({
   selector: 'app-queue',
   standalone: false,
@@ -17,45 +20,59 @@ declare var bootstrap: any;
   styleUrl: './queue.component.css',
 })
 export class QueueComponent {
-  page: 'queue' | 'status' | 'menu' = 'queue';
-  activeTab: 'main' | 'hold' = 'main';
-  menuList = [
-    { id: 1, name: 'Tiger Burger', active: true },
-    { id: 2, name: 'Cheese Burger', active: false },
-    { id: 3, name: 'French Fries', active: true },
-  ];
-  _hold: any[] = [];
-  _data: Queue[] = [{} as Queue];
-  _waiting: Queue[] = [{} as Queue];
-  _queue: string = '';
-  transactionId!: string;
-  _datapayment: Queue[] = [{} as Queue];
-  _getbydata: any[] = [];
-  audioQueue: any[] = [];
-  isPlaying: boolean = false;
-  isPlayingAudio = false;
-  _omiseData: string = '';
-  _statusPayment: string = '';
-  // 🟨 สำหรับหน้าเช็คสถานะหลังบ้าน
-  charges: any[] = []; // 👈 เปลี่ยนจาก jsonFormater[] เป็น array ธรรมดา
-  selectedCharge!: number;
-  startDate: string = '';
-  endDate: string = '';
-  startTime: string = '';
-  endTime: string = '';
+  // =========================
+  // UI STATE
+  // =========================
+  page: Page = 'queue';
+  activeTab: Tab = 'main';
   menuOpen = false;
-  _queueString: string = '';
-  playing: string | null = null;
-  callQueueBuffer: { queue: string; transaction_id: number }[] = [];
-  isPlayingQueue = false;
-  selectedQueue: any = null;
-  private destroy$ = new Subject<void>();
-  isMenuOpen = true;
-  changedMenus: Record<number, boolean> = {};
+  statusTab: 'all' | 'success' | 'pending' | 'failed' | 'error' = 'all';
+
   showConfirmPopup = false;
   pendingQueue: { queue: string; transaction_id: number } | null = null;
+
+  playing: string | null = null;
+  _queueString: string = '';
+
+  // =========================
+  // DATA
+  // =========================
+  _data: Queue[] = [];
+  _waiting: Queue[] = [];
+  _hold: any[] = []; // (ยังไม่ได้ใช้จริงมากนัก แต่คงไว้)
+
   _allData: any[] = [];
-  
+  _errorData: any[] = [];
+
+  changedMenus: Record<number, boolean> = {};
+
+  _datapayment: any[] = [];
+  _getbydata: any[] = [];
+
+  // =========================
+  // PAYMENT DETAIL
+  // =========================
+  selectedCharge: any;
+  transactionId: any;
+
+  _omiseData: string = '';
+  _statusPayment: string = '';
+
+  startDate: string = '';
+  endDate: string = '';
+
+  // =========================
+  // AUDIO / QUEUE BUFFER
+  // =========================
+  audioQueue: any[] = [];
+  isPlayingAudio = false;
+
+  callQueueBuffer: { queue: string; transaction_id: number }[] = [];
+  isPlayingQueue = false;
+
+  private destroy$ = new Subject<void>();
+  private confirmAudio = new Audio();
+  searchText: string = '';
 
   constructor(
     private router: Router,
@@ -63,10 +80,18 @@ export class QueueComponent {
     private sockets: SocketSupply,
   ) {}
 
+  // =========================
+  // LIFECYCLE
+  // =========================
   async ngOnInit() {
-    await this.getQueue();
-    await this.waitQueue();
-    await this.getAllData();
+    await Promise.all([
+      this.getQueue(),
+      this.waitQueue(),
+      this.getAllData(),
+      this.loadCharges(),
+      this.getAllDataError(),
+    ]);
+
     this.getData
       .onQueueRefresh()
       .pipe(takeUntil(this.destroy$))
@@ -78,123 +103,69 @@ export class QueueComponent {
     this.destroy$.complete();
   }
 
-  async refreshQueue() {
-    console.log('🔄 Refresh queue data!');
-    await this.getQueue();
-    await this.waitQueue();
-  }
+  // =========================
+  // NAV / UI HELPERS
+  // =========================
+  setPage(p: Page) {
+    this.page = p;
+    this.menuOpen = false;
 
-  async playNextAudio() {
-    if (this.audioQueue.length === 0) {
-      this.isPlayingAudio = false;
-      return;
-    }
-
-    this.isPlayingAudio = true;
-
-    const data = this.audioQueue.shift();
-
-    // ⭐ อัปเดต UI ตอนนี้ทันที ก่อนเล่นเสียง
-    this._queueString = data.queue;
-    console.log('🟩 แสดงคิวพร้อมเริ่มเสียง:', this._queueString);
-
-    const audioSrc = 'data:audio/mpeg;base64,' + data.audio;
-
-    // เล่นเสียง 3 รอบเหมือนเดิม
-    for (let i = 1; i <= 3; i++) {
-      const audio = new Audio(audioSrc);
-      await new Promise<void>((resolve) => {
-        audio.onended = () => resolve();
-        audio.onerror = () => resolve();
-        audio.play().catch(() => resolve());
-      });
-
-      if (i < 3) await new Promise((r) => setTimeout(r, 800));
-    }
-
-    console.log('🏁 คิวนี้เล่นเสียงจบ:', data.queue);
-
-    // ทำต่อ
-    this.playNextAudio();
-  }
-
-  toggleMenuList(menuId: number, checked: boolean) {
-    // 1️⃣ เก็บเฉพาะที่เปลี่ยน
-    this.changedMenus[menuId] = checked;
-
-    // 2️⃣ อัปเดตข้อมูลที่ UI ใช้อยู่จริง
-    this._allData = this._allData.map((m) =>
-      m.product_id === menuId ? { ...m, active: checked } : m,
-    );
-  }
-  async saveMenuSetting() {
-    if (Object.keys(this.changedMenus).length === 0) {
-      alert('ไม่มีการเปลี่ยนแปลง');
-      return;
-    }
-
-    // แปลงเป็น array ส่ง backend
-    const payload = Object.entries(this.changedMenus).map(([id, active]) => ({
-      product_id: Number(id),
-      active,
-    }));
-
-    console.log('📦 payload:', payload);
-
-    const data = await this.getData.UpdateProductActive(payload);
-    if (data.status == 200) {
-      Swal.fire({
-        position: 'center',
-        icon: 'success',
-        title: 'บันทึกข้อมูลสำเร็จ',
-        showConfirmButton: false,
-        timer: 1500,
-      });
-    }
-  }
-  oggleMenuList(menuId: number, checked: boolean) {
-    // 1️⃣ เก็บเฉพาะที่เปลี่ยน
-    this.changedMenus[menuId] = checked;
-
-    // 2️⃣ อัปเดตข้อมูลที่ UI ใช้อยู่จริง
-    this._allData = this._allData.map((m) =>
-      m.product_id === menuId ? { ...m, active: checked } : m,
-    );
-  }
-
-  async getAllData() {
-    const data = await this.getData.getAllData();
-    if (data.status == 200) {
-      this._allData = data.msg;
-      console.log(this._allData);
-    }
+    // optional: เปลี่ยนหน้าแล้ว reset tab บางหน้า
+    if (p === 'queue') this.activeTab = 'main';
   }
 
   toggleMenu() {
     this.menuOpen = !this.menuOpen;
   }
 
+  switchTab(tab: Tab) {
+    this.activeTab = tab;
+  }
+
+  // =========================
+  // KEYBOARD SHORTCUT
+  // =========================
   @HostListener('document:keydown', ['$event'])
   handleKeyPress(event: KeyboardEvent) {
-    // ตัวอย่าง: กด Enter หรือ ArrowRight เพื่อเรียกคิว
     if (event.key === 'Enter' || event.key === 'ArrowRight') {
-      console.log('🔊 Key pressed to call next queue');
-      if (this._data) {
-        console.log('🔊 Key pressed to call ');
-        this.enqueueQueue(this._data[0].queue, this._data[0].transaction_id);
+      if (this._data?.length > 0) {
+        const first = this._data[0];
+        if (first?.queue && first?.transaction_id) {
+          this.enqueueQueue(first.queue, first.transaction_id);
+        }
       }
     }
   }
-  // 📥 เพิ่มคิวเข้า buffer
-  enqueueQueue(queue: string, transaction_id: number) {
-    this.callQueueBuffer.push({ queue, transaction_id });
-    if (!this.isPlayingQueue) {
-      this.processNextQueue();
-    }
+
+  // =========================
+  // QUEUE: LOAD / REFRESH
+  // =========================
+  async refreshQueue() {
+    console.log('🔄 Refresh queue data!');
+    await Promise.all([this.getQueue(), this.waitQueue()]);
   }
 
-  // 🔁 ดึงคิวถัดไปมาเล่น
-  async processNextQueue() {
+  async getQueue() {
+    const data = await this.getData.getQueue();
+    if (data.status === 200)
+      this._data = Array.isArray(data.msg) ? data.msg : [];
+  }
+
+  async waitQueue() {
+    const data = await this.getData.getQueueWaiting();
+    if (data.status === 200)
+      this._waiting = Array.isArray(data.msg) ? data.msg : [];
+  }
+
+  // =========================
+  // QUEUE: CALL FLOW (BUFFER -> API -> POPUP)
+  // =========================
+  enqueueQueue(queue: string, transaction_id: number) {
+    this.callQueueBuffer.push({ queue, transaction_id });
+    if (!this.isPlayingQueue) this.processNextQueue();
+  }
+
+  private async processNextQueue() {
     if (this.callQueueBuffer.length === 0) {
       this.isPlayingQueue = false;
       return;
@@ -205,39 +176,22 @@ export class QueueComponent {
     if (!next) return;
 
     await this.CallQueueAPI(next.queue, next.transaction_id);
-
-    // ✅ เล่นคิวต่อไปเมื่ออันก่อนจบครบ 3 รอบแล้ว
     this.processNextQueue();
   }
 
-  // 🎧 เรียกคิวจริง (เล่นเสียง 3 รอบ)
   async CallQueueAPI(queue: string, transaction_id: number) {
     const data = await this.getData.CallGoogleApi(queue, transaction_id);
 
     if (data.status === 200 && data.msg) {
-      // 🔊 เสียงยืนยัน (ที่คุณทำแล้ว)
-      this.playConfirmSound(data.msg);
+      await this.playConfirmSound(data.msg);
 
-      // ⭐ เปิด popup
+      // เปิด popup ยืนยัน
       this.pendingQueue = { queue, transaction_id };
       this.showConfirmPopup = true;
     }
   }
-  openConfirmPopup(queue: string, transaction_id: number) {
-    this.pendingQueue = { queue, transaction_id };
-    this.showConfirmPopup = true;
-
-    // ⏱️ ปิดเองใน 5 วินาที ถ้าไม่กด
-    setTimeout(() => {
-      if (this.showConfirmPopup) {
-        this.showConfirmPopup = false;
-        this.pendingQueue = null;
-      }
-    }, 5000);
-  }
 
   waitQueueConfirm() {
-    // ไม่ต้องทำอะไรกับ backend
     this.showConfirmPopup = false;
     this.pendingQueue = null;
   }
@@ -246,101 +200,24 @@ export class QueueComponent {
     if (!this.pendingQueue) return;
 
     const tx = this.pendingQueue.transaction_id;
+    const res = await this.getData.update_transaction(tx);
 
-    // ใช้ API เดิมของคุณ
-    await this.getData.update_transaction(tx);
+    if (res.status === 200) {
+      // ✅ ไม่ reload หน้าทิ้ง ๆ — รีเฟรชเฉพาะรายการ
+      await this.refreshQueue();
+    }
 
     this.showConfirmPopup = false;
     this.pendingQueue = null;
   }
-  private confirmAudio = new Audio();
 
-  async playConfirmSound(base64Audio: string) {
-    const audioSrc = 'data:audio/mpeg;base64,' + base64Audio;
-
-    this.confirmAudio.src = audioSrc;
-    this.confirmAudio.load(); // ⭐ สำคัญ
-    this.confirmAudio.playbackRate = 1.0; // ⭐ ช้าลง (0.5–1.0)
-
-    for (let i = 1; i <= 3; i++) {
-      console.log(`🔔 เสียงยืนยันรอบที่ ${i}`);
-
-      await this.playConfirmOnce();
-
-      if (i < 3) {
-        await this.delay(600); // เว้นจังหวะ
-      }
-    }
-  }
-
-  private playConfirmOnce(): Promise<void> {
-    return new Promise((resolve) => {
-      this.confirmAudio.currentTime = 0;
-
-      this.confirmAudio.onended = () => resolve();
-      this.confirmAudio.onerror = () => resolve();
-
-      this.confirmAudio.play().catch(() => resolve());
-    });
-  }
-
-  private delay(ms: number) {
-    return new Promise((res) => setTimeout(res, ms));
-  }
-
-  openChargeModal(item: any) {
-    console.log('Charge detail modal:', item);
-    this.selectedCharge = item;
-
-    const modalEl = document.getElementById('chargeOmiseModal');
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
-  }
-
-  // 🔹 ของเดิม
-  holdQueue(q: any) {
-    this._data = this._data.filter(
-      (x) => x.transaction_id !== q.transaction_id,
-    );
-    this._hold.push(q);
-  }
-
-  returnQueue(q: any) {
-    this._hold = this._hold.filter(
-      (x) => x.transaction_id !== q.transaction_id,
-    );
-    this._data.push(q);
-  }
-
-  switchTab(tab: 'main' | 'hold') {
-    this.activeTab = tab;
-  }
-
-  openModal(queue: any) {
-    this.selectedQueue = queue;
-    const modalEl = document.getElementById('queueModal');
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
-  }
-
-  // refreshQueue() {
-  //   console.log('🔄 refresh queue...');
-  // }
-
-  async getQueue() {
-    const data = await this.getData.getQueue();
-    if (data.status == 200) this._data = data.msg;
-  }
-
-  async waitQueue() {
-    const data = await this.getData.getQueueWaiting();
-    if (data.status == 200) this._waiting = data.msg;
-  }
-
+  // =========================
+  // QUEUE: UPDATE STATUS
+  // =========================
   async updateTransaction(transactionId: number) {
     const data = await this.getData.update_transaction(transactionId);
-    if (data.status == 200) {
-      window.location.reload();
+    if (data.status === 200) {
+      await this.refreshQueue(); // ✅ แทน reload
     }
   }
 
@@ -349,168 +226,293 @@ export class QueueComponent {
       status,
       transactionId,
     );
-    if (data.status == 200) console.log('Transaction updated successfully');
+    if (data.status === 200) {
+      await this.refreshQueue(); // ✅ แทน reload
+    }
   }
 
-  // 🟨 หน้าเช็คสถานะ
+  // =========================
+  // AUDIO
+  // =========================
+  async playNextAudio() {
+    if (this.audioQueue.length === 0) {
+      this.isPlayingAudio = false;
+      return;
+    }
+
+    this.isPlayingAudio = true;
+    const data = this.audioQueue.shift();
+
+    this._queueString = data.queue;
+    const audioSrc = 'data:audio/mpeg;base64,' + data.audio;
+
+    for (let i = 1; i <= 3; i++) {
+      const audio = new Audio(audioSrc);
+      await new Promise<void>((resolve) => {
+        audio.onended = () => resolve();
+        audio.onerror = () => resolve();
+        audio.play().catch(() => resolve());
+      });
+      if (i < 3) await this.delay(800);
+    }
+
+    this.playNextAudio();
+  }
+
+  async playConfirmSound(base64Audio: string) {
+    const audioSrc = 'data:audio/mpeg;base64,' + base64Audio;
+
+    this.confirmAudio.src = audioSrc;
+    this.confirmAudio.load();
+    this.confirmAudio.playbackRate = 1.0; // ปรับให้ช้าลงได้ 0.85, 0.75 ฯลฯ
+
+    for (let i = 1; i <= 3; i++) {
+      await this.playConfirmOnce();
+      if (i < 3) await this.delay(600);
+    }
+  }
+
+  private playConfirmOnce(): Promise<void> {
+    return new Promise((resolve) => {
+      this.confirmAudio.currentTime = 0;
+      this.confirmAudio.onended = () => resolve();
+      this.confirmAudio.onerror = () => resolve();
+      this.confirmAudio.play().catch(() => resolve());
+    });
+  }
+
+  private delay(ms: number) {
+    return new Promise((res) => setTimeout(res, ms));
+  }
+
+  // =========================
+  // MENU SETTINGS
+  // =========================
+  async getAllData() {
+    const data = await this.getData.getAllData();
+    if (data.status === 200) {
+      this._allData = Array.isArray(data.msg) ? data.msg : [];
+    }
+  }
+
+  toggleMenuList(menuId: number, checked: boolean) {
+    this.changedMenus[menuId] = checked;
+    this._allData = this._allData.map((m) =>
+      m.product_id === menuId ? { ...m, active: checked } : m,
+    );
+  }
+
+  async saveMenuSetting() {
+    if (Object.keys(this.changedMenus).length === 0) {
+      Swal.fire({
+        icon: 'info',
+        title: 'ไม่มีการเปลี่ยนแปลง',
+        timer: 1200,
+        showConfirmButton: false,
+      });
+      return;
+    }
+
+    const payload = Object.entries(this.changedMenus).map(([id, active]) => ({
+      product_id: Number(id),
+      active,
+    }));
+
+    const data = await this.getData.UpdateProductActive(payload);
+    if (data.status === 200) {
+      this.changedMenus = {}; // ✅ เคลียร์หลัง save
+      Swal.fire({
+        position: 'center',
+        icon: 'success',
+        title: 'บันทึกข้อมูลสำเร็จ',
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'บันทึกไม่สำเร็จ',
+        text: String(data.msg ?? ''),
+      });
+    }
+  }
+
+  // ✅ ลบ typo เดิม (oggleMenuList) ไม่ต้องมีแล้ว
+  // oggleMenuList(...) { ... }
+
+  // =========================
+  // PAYMENT: LIST
+  // =========================
   async loadCharges() {
-    const data = await this.getData.GetdataPayment(
-      this.startDate,
-      this.endDate,
-      this.startTime,
-      this.endTime,
-    );
+    const data = await this.getData.GetdataPayment();
+
     if (data.status === 200) {
-      this._datapayment = data.msg;
-      console.log('Filtered charges:', this._datapayment);
+      // ✅ normalize: กัน null/undefined ที่ทำให้ includes() พัง
+      this._datapayment = (Array.isArray(data.msg) ? data.msg : []).map(
+        (x: any) => ({
+          ...x,
+          status_payment: (x.status_payment ?? '').toString(),
+          payment: (x.payment ?? '').toString(),
+        }),
+      );
+    } else {
+      this._datapayment = [];
     }
   }
 
-  async filterCharges() {
-    const data = await this.getData.GetdataPayment(
-      this.startDate,
-      this.endDate,
-      this.startTime,
-      this.endTime,
-    );
-    if (data.status === 200) {
-      this._datapayment = data.msg;
+  // =========================
+  // PAYMENT: DETAIL MODAL
+  // =========================
+  async openChargeDetail(transaction_id: any) {
+    this.selectedCharge = transaction_id;
+    this.transactionId = transaction_id;
 
-      console.log('Filtered charges:', this._datapayment);
-    }
-  }
-
-  async openChargeDetail(c: any) {
-    this.selectedCharge = c;
-    console.log(this.selectedCharge);
-    this.transactionId = c;
     const data = await this.getData.GetdataPaymentByData(
       this.selectedCharge,
       this.startDate,
       this.endDate,
     );
-    if (data.status === 200) {
-      this._getbydata = Array.isArray(data.msg) ? data.msg : [data.msg];
 
-      // 🔧 แปลง json string ให้เป็น object (JSON หรือ XML)
-      this._getbydata = await Promise.all(
-        this._getbydata.map(async (c: any) => {
-          let parsed: any = c.json;
+    if (data.status !== 200) return;
 
-          try {
-            // ✅ ถ้าเป็น JSON
-            if (typeof c.json === 'string' && c.json.trim().startsWith('{')) {
-              parsed = JSON.parse(c.json);
-              this._omiseData = parsed.id;
-              this._statusPayment = parsed.status;
-            }
-            // ✅ ถ้าเป็น XML
-            else if (
-              typeof c.json === 'string' &&
-              c.json.trim().startsWith('<')
-            ) {
-              const parser = new XMLParser({
-                ignoreAttributes: false,
-                attributeNamePrefix: '',
-              });
+    this._getbydata = Array.isArray(data.msg) ? data.msg : [data.msg];
 
-              const xmlObj = parser.parse(c.json);
-              parsed = xmlObj.xml;
-            }
-          } catch (e) {
-            console.error('❌ Error parsing json/xml:', e);
+    // parse json/xml
+    this._getbydata = await Promise.all(
+      this._getbydata.map(async (c: any) => {
+        let parsed: any = c.json;
+
+        try {
+          if (typeof c.json === 'string' && c.json.trim().startsWith('{')) {
+            parsed = JSON.parse(c.json);
+            this._omiseData = parsed?.id ?? '';
+            this._statusPayment = parsed?.status ?? '';
+          } else if (
+            typeof c.json === 'string' &&
+            c.json.trim().startsWith('<')
+          ) {
+            const parser = new XMLParser({
+              ignoreAttributes: false,
+              attributeNamePrefix: '',
+            });
+            const xmlObj = parser.parse(c.json);
+            parsed = xmlObj.xml;
           }
+        } catch (e) {
+          console.error('❌ Error parsing json/xml:', e);
+        }
 
-          return { ...c, json: parsed };
-        }),
-      );
-
-      const modalEl = document.getElementById('chargeDetailModal');
-      const modal = new bootstrap.Modal(modalEl);
-      modal.show();
-    }
-  }
-
-  async updateJsonData(json: string) {
-    console.log('Updating JSON data for transaction ID:', json);
-    const data = await this.getData.update_transaction_json(
-      json,
-      this._statusPayment,
-      this.transactionId,
+        return { ...c, json: parsed };
+      }),
     );
-    if (data.status === 200) {
-      console.log('✅ JSON data updated successfully:', data.msg);
-    }
+
+    const modalEl = document.getElementById('chargeDetailModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
   }
 
   async reloadCharge(charg_id: string) {
     const data = await this.getData.RecheckOmisePayment(charg_id);
     if (data.status === 200) {
       this._omiseData = data.msg;
-      this.updateJsonData(this._omiseData);
-      console.log('Reloaded charge data:', this._omiseData);
-      window.location.reload();
+      await this.updateJsonData(this._omiseData);
+
+      // ✅ ไม่ reload หน้า: รีโหลด list + detail เฉพาะที่จำเป็น
+      await this.loadCharges();
+      if (this.transactionId) await this.openChargeDetail(this.transactionId);
     }
   }
 
-  viewSlip(c: any) {
-    console.log('Viewing slip for charge:', c);
+  async updateJsonData(json: string) {
+    const data = await this.getData.update_transaction_json(
+      json,
+      this._statusPayment,
+      this.transactionId,
+    );
+
+    if (data.status === 200) {
+      console.log('✅ JSON data updated successfully');
+    }
+  }
+
+  // =========================
+  // SLIP: VIEW / PRINT
+  // =========================
+  printSlip() {
     try {
-      if (!c) {
-        alert('❌ ไม่มีข้อมูล Slip');
+      const slipBase64 = this._getbydata[0]?.slips;
+      if (!slipBase64) {
+        Swal.fire({ icon: 'error', title: 'ไม่พบข้อมูลสลิปในระบบ' });
         return;
       }
 
-      // ตรวจว่ามี header "data:application/pdf;base64," หรือไม่
-      let base64Data = c;
+      let base64Data = slipBase64;
       if (base64Data.startsWith('data:application/pdf;base64,')) {
         base64Data = base64Data.replace('data:application/pdf;base64,', '');
       }
 
-      // ✅ แปลง Base64 → Blob
       const byteCharacters = atob(base64Data);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
+
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: 'application/pdf' });
 
-      // ✅ สร้าง URL แล้วเปิดแท็บใหม่
       const fileURL = URL.createObjectURL(blob);
       const win = window.open(fileURL, '_blank');
 
-      // ✅ auto print เมื่อเปิดแท็บใหม่ (บาง browser ต้องรอโหลด)
-      if (win) {
-        win.onload = () => win.print();
+      if (!win) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Popup ถูกบล็อก',
+          text: 'กรุณาปิด Popup Blocker',
+        });
+        return;
       }
+
+      win.onload = () => win.focus();
     } catch (err) {
       console.error('❌ Error displaying slip:', err);
+      Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาดในการเปิดสลิป' });
     }
   }
 
-  sendToPrinter() {
-    const data = {
-      queue: 1005,
-      ticket: 'POS-1005',
-      items: [
-        { name: '🍔 Tiger Burger', qty: 2 },
-        { name: '🥤 Cola', qty: 1 },
-      ],
-      total: 245,
-    };
-    this.getData.printOrder(data).subscribe({
-      next: (res) => {
-        console.log('✅ Success:', res);
-        alert('🖨️ พิมพ์สำเร็จ!');
-      },
-      error: (err) => {
-        console.error('❌ Error:', err);
-        alert('❌ ไม่สามารถเชื่อมต่อเครื่องพิมพ์ได้');
-      },
-    });
-  }
+  // =========================
+  // PRINTER (ยังเป็น stub)
+  // =========================
+  // sendToPrinter() {
+  //   const data = {
+  //     queue: 1005,
+  //     ticket: 'POS-1005',
+  //     items: [
+  //       { name: '🍔 Tiger Burger', qty: 2 },
+  //       { name: '🥤 Cola', qty: 1 },
+  //     ],
+  //     total: 245,
+  //   };
 
+  //   this.getData.printOrder(data).subscribe({
+  //     next: (res) => {
+  //       console.log('✅ Success:', res);
+  //       Swal.fire({
+  //         icon: 'success',
+  //         title: 'พิมพ์สำเร็จ 🖨️',
+  //         timer: 1200,
+  //         showConfirmButton: false,
+  //       });
+  //     },
+  //     error: (err) => {
+  //       console.error('❌ Error:', err);
+  //       Swal.fire({ icon: 'error', title: 'เชื่อมต่อเครื่องพิมพ์ไม่ได้' });
+  //     },
+  //   });
+  // }
+
+  // =========================
+  // ROUTE NAV
+  // =========================
   async ClickDashboard() {
     this.router.navigate(['/dashboard-status']);
   }
@@ -519,45 +521,81 @@ export class QueueComponent {
     this.router.navigate(['/dashboard-queue']);
   }
 
-  printSlip() {
-    try {
-      const slipBase64 = this._getbydata[0]?.slips;
-      if (!slipBase64) {
-        alert('❌ ไม่พบข้อมูลสลิปในระบบ');
-        return;
-      }
+  // =========================
+  // (OPTIONAL) OLD MODAL UTILS
+  // =========================
+  openModal(queue: any) {
+    const modalEl = document.getElementById('queueModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  }
 
-      // ตรวจว่ามี prefix ไหม
-      let base64Data = slipBase64;
-      if (base64Data.startsWith('data:application/pdf;base64,')) {
-        base64Data = base64Data.replace('data:application/pdf;base64,', '');
-      }
+  openChargeModal(item: any) {
+    const modalEl = document.getElementById('chargeOmiseModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  }
 
-      // แปลง Base64 → Blob PDF
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
+  switchStatusTab(tab: 'all' | 'success' | 'pending' | 'error') {
+    this.statusTab = tab;
+  }
+  get filteredPayments() {
+    let list: any[] = [];
 
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
+    // แท็บ Error หลังบ้าน
+    if (this.statusTab === 'error') {
+      list = this._errorData;
+    }
 
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'application/pdf' });
+    if (this.statusTab === 'all') return this._datapayment;
 
-      // เปิดแท็บใหม่
-      const fileURL = URL.createObjectURL(blob);
-      const win = window.open(fileURL, '_blank');
+    if (this.statusTab === 'success') {
+      list = this._datapayment.filter(
+        (x) =>
+          x.status_payment?.includes('successful') ||
+          x.status_payment?.includes('SUCCESS'),
+      );
+    }
 
-      if (win) {
-        win.onload = () => {
-          win.focus();
-        };
-      } else {
-        alert('❌ เบราว์เซอร์บล็อกการเปิดหน้าต่าง กรุณาปิด Popup Blocker');
-      }
-    } catch (err) {
-      console.error('❌ Error displaying slip:', err);
-      alert('เกิดข้อผิดพลาดในการเปิดสลิป');
+    // ===== ค้นหาจากเลขที่สินค้า (order_number) =====
+    if (!this.searchText) return list;
+
+    const keyword = this.searchText.toLowerCase().trim();
+
+    return list.filter((x) =>
+      (x.order_number ?? '').toLowerCase().includes(keyword),
+    );
+
+  }
+
+  async getAllDataError() {
+    const data = await this.getData.getDataError();
+    if (data.status === 200) {
+      this._errorData = Array.isArray(data.msg) ? data.msg : [];
     }
   }
+
+
+sendToPrinter(q: any) {
+  this.getData.printToWpf(q.order_number).subscribe({
+    next: () => {
+      console.log("🖨 PRINT OK");
+      alert("พิมพ์เรียบร้อย");
+    },
+    error: err => {
+      console.error("PRINT ERROR", err);
+      alert("พิมพ์ไม่สำเร็จ");
+    }
+  });
+}
+
+
+
+
+
+
+
+
+
+
 }
